@@ -1,8 +1,27 @@
-#include <VariableTimedAction.h>
+#include "RunOnceTimer.h"
 
 #ifndef CarContrpol_h
 #define CarContrpol_h
 
+
+//enum EventType{
+//      CAR_MOVEMENT_STOP,
+//      CAR_MOVEMENT_FORWARD,
+//      CAR_MOVEMENT_BACKWARD,
+//      CAR_MOVEMENT_RIGHT,
+//      CAR_MOVEMENT_LEFT
+//    };
+
+
+//    enum STATE {
+//        MOVING_FORWARD,
+//        MOVING_FORWARD_RIGHT,
+//        MOVING_FORWARD_LEFT,
+//        MOVING_BACKWARD_LEFT,
+//        MOVING_BACKWARD_RIGHT,
+//        TURNING_RIGHT,
+//        TURNING_LEFT
+//    };
 
 enum CAR_EVENT {
   STOP,
@@ -12,30 +31,6 @@ enum CAR_EVENT {
   LEFT
 };
 
-class RunnableTask {
-  public:
-    virtual void execute(); 
-};
-
-class RunOnceTimer : public VariableTimedAction {
-
-  private:
-    RunnableTask *currentTask = NULL;
-    unsigned long run() {
-      if (this->currentTask != NULL){
-        currentTask->execute();
-      }
-      // It will leak!
-      this->stop();
-      return 0;
-    };
-
-  public:
-    void scheduleTask(RunnableTask *task, int interval){
-      this->currentTask = task;
-      this->start(interval);
-    };
-};
 
 
 class CarState {
@@ -52,29 +47,29 @@ class CarState {
 
 class StoppedState : public CarState {
   public:
-     StoppedState(CarMovement *carMovement, RunOnceTimer *timer);
+    StoppedState(CarMovement *carMovement, RunOnceTimer *timer);
     CarState* transition(CAR_EVENT event);
 };
 
 class MovingForwardState : public CarState {
-  
+
   private:
     static const int SPEED_ACCEL = 20;
     CarState* accelerate(int increment);
     CarState* slowDown(int increment);
-  
+
   public:
     MovingForwardState(CarMovement *carMovement, RunOnceTimer *timer);
     CarState* transition(CAR_EVENT event);
 };
 
 class MovingBackwardState : public CarState {
-  
+
   private:
     static const int SPEED_ACCEL = 20;
     CarState* accelerate(int increment);
     CarState* slowDown(int increment);
-  
+
   public:
     MovingBackwardState(CarMovement *carMovement, RunOnceTimer *timer);
     CarState* transition(CAR_EVENT event);
@@ -146,7 +141,7 @@ CarState* MovingBackwardState::accelerate(int increment){
 CarState* MovingBackwardState::slowDown(int increment){
   if (this->carMovement->getCurrentSpeed() == 0){
     return new MovingForwardState(this->carMovement, this->runOnceTimer);
-  } 
+  }
   this->carMovement->moveBackward(this->carMovement->getCurrentSpeed() - increment);
 };
 
@@ -162,33 +157,25 @@ CarState* MovingBackwardState::transition(CAR_EVENT event) {
   return this;
 };
 
-
-//    enum STATE {
-//        MOVING_FORWARD,
-//        MOVING_FORWARD_RIGHT,
-//        MOVING_FORWARD_LEFT,
-//        MOVING_BACKWARD_LEFT,
-//        MOVING_BACKWARD_RIGHT,
-//        TURNING_RIGHT,
-//        TURNING_LEFT
-//    };
-
-
 class CarControl {
 
  private:
     CarMovement *carMovement;
+    EventBus *eventBus;
     CarState *currentState;
     RunOnceTimer *runOnceTimer = new RunOnceTimer();
 
   public:
-    CarControl(CarMovement *carMovement);
+    CarControl(CarMovement *carMovement, EventBus *eventBus);
     void transition(CAR_EVENT event);
-    void setup(){}
+    void setup(){
+      runOnceTimer->start(1000);
+    }
 };
 
-CarControl::CarControl(CarMovement *carMovement){
+CarControl::CarControl(CarMovement *carMovement, EventBus *eventBus){
   this->carMovement = carMovement;
+  this->eventBus = eventBus;
   this->currentState = new StoppedState(carMovement, runOnceTimer);
 };
 

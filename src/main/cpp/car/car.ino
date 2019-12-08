@@ -1,6 +1,10 @@
-#include <VariableTimedAction.h>
+#include "EventBus.h"
+#include "CarEvents.h"
+#include "ActionScheduler.h"
 #include "CarMovement.h"
 #include "CarControl.h"
+#include "IRCarControl.h"
+
 
 #define DIR_1_L_PIN      2    // Motor direction
 #define DIR_2_L_PIN      4    // Motor direction
@@ -9,16 +13,24 @@
 #define DIR_2_R_PIN      8    // Motor direction
 #define SPEED_R_PIN      5    // Needs to be a PWM pin to be able to control motor speed
 
-CarMovement carMovement(DIR_1_L_PIN, DIR_2_L_PIN, SPEED_L_PIN, 
+
+#define IR_PIN           3    // IR Port
+
+CarMovement carMovement(DIR_1_L_PIN, DIR_2_L_PIN, SPEED_L_PIN,
                         DIR_1_R_PIN, DIR_2_R_PIN, SPEED_R_PIN);
 
-CarControl carControl(&carMovement);
+EventBus eventBus;
+
+CarControl carControl(&carMovement, &eventBus);
+
+IRCarControl irCarControl(IR_PIN, &eventBus);
 
 void setup(){
   carMovement.setup();
   carControl.setup();
+  irCarControl.setup();
 }
 
 void loop() {
-  VariableTimedAction::updateActions();
+  ActionScheduler::updateActions();
 }
