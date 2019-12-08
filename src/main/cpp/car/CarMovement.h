@@ -3,8 +3,6 @@
 
 class CarMovement {
   private:
-    const int MIN_MOVING_SPEED = 90;
-    const int MAX_MOVING_SPEED = 250;
     const int MOVING_SPEED_DIFF = (MAX_MOVING_SPEED - MIN_MOVING_SPEED);
   
     int dir1LeftPin;
@@ -23,10 +21,13 @@ class CarMovement {
 
   public:
 
+    static const int MIN_MOVING_SPEED = 90;
+    static const int MAX_MOVING_SPEED = 250;
+
     CarMovement(int dir1LeftPin, int dir2LeftPin, int speedLeftPin,
                 int dir1RightPin, int dir2RightPin, int speedRightPin){
       this->dir1LeftPin = dir1LeftPin;
-      this->dir2LeftPin = dir1LeftPin;
+      this->dir2LeftPin = dir2LeftPin;
       this->speedLeftPin = speedLeftPin;
       this->dir1RightPin = dir1RightPin;
       this->dir2RightPin = dir2RightPin;
@@ -43,6 +44,10 @@ class CarMovement {
     }
 
     void setMovingSpeed(int movingSpeed) {
+      int realSpeed = MIN_MOVING_SPEED + movingSpeed;
+      if (movingSpeed > MAX_MOVING_SPEED){
+        movingSpeed = MAX_MOVING_SPEED;
+      }
       this->currentSpeed = movingSpeed;
       this->setMotorSpeed(movingSpeed, movingSpeed);
     }

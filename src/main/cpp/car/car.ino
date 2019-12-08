@@ -25,7 +25,9 @@ CarControl carControl(&carMovement, &eventBus);
 
 IRCarControl irCarControl(IR_PIN, &eventBus);
 
+
 void setup(){
+  Serial.begin(9600);
   carMovement.setup();
   carControl.setup();
   irCarControl.setup();

@@ -1,5 +1,4 @@
 #include "ActionScheduler.h"
-
 #include <IRremote.h>
 
 #define IR_KEY_UP_1          0x00FF18E7
@@ -16,6 +15,7 @@
 #ifndef IRCarControl_h
 #define IRCarControl_h
 
+
 class IRCarControl : public ActionScheduler {
 
   private:
@@ -24,7 +24,7 @@ class IRCarControl : public ActionScheduler {
     IRrecv *irrecv;
     decode_results irResults;
 
-    int lastSelectedKey;
+    int lastSelectedKey = -1;
 
     unsigned long run();
 
@@ -33,6 +33,8 @@ class IRCarControl : public ActionScheduler {
     CarEvent* readIrKeyAsCarEvent();
     void setup(){
       this->start(20, false);
+      irrecv->enableIRIn();
+      irrecv->blink13(true);
     }
 };
 
@@ -42,9 +44,9 @@ IRCarControl::IRCarControl(int irPin, EventBus *eventBus){
 };
 
 CarEvent* IRCarControl::readIrKeyAsCarEvent(){
-  if (this->irrecv->decode(&this->irResults)){
+  if (irrecv->decode(&this->irResults)){
       int currentValue = this->irResults.value;
-      this->irrecv->resume();
+      irrecv->resume();
 
       if (currentValue == 0XFFFFFFFF || currentValue == 0XFF) {
           if (*this->irResults.rawbuf < 1000){
@@ -53,7 +55,6 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
             currentValue = this->lastSelectedKey;
           }
       }
-
       CarEvent *carEvent = NULL;
       switch(currentValue){
         case IR_KEY_UP_1:
@@ -71,7 +72,7 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
 //        case IR_KEY_LEFT_2:
 //          break;
         case IR_KEY_STOP_1:
-        case IR_KEY_STOP_2:
+        case IR_KEY_STOP_2:       
           carEvent = new CarMoveStopEvent();
           break;
       }
@@ -85,8 +86,10 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
 
 
 unsigned long IRCarControl::run(){
-  CarEvent *eventType = this->readIrKeyAsCarEvent();
-  this->eventBus->dispatchEvent(eventType);
+  CarEvent *event = this->readIrKeyAsCarEvent();
+  if (event != NULL) {
+    this->eventBus->dispatchEvent(event);
+  }
   return 0;
 };
 
