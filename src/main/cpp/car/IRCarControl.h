@@ -32,7 +32,7 @@ class IRCarControl : public ActionScheduler {
     IRCarControl(int irPin, EventBus *eventBus);
     CarEvent* readIrKeyAsCarEvent();
     void setup(){
-      this->start(20, false);
+      this->start(10, true);
       irrecv->enableIRIn();
       irrecv->blink13(true);
     }
@@ -59,21 +59,23 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
       switch(currentValue){
         case IR_KEY_UP_1:
         case IR_KEY_UP_2:
-          carEvent = new CarMoveForwardEvent();
+          carEvent = new CarEvent(CarEvent::MOVE_FORWARD);
           break;
         case IR_KEY_DOWN_1:
         case IR_KEY_DOWN_2:
-          carEvent = new CarMoveBackwardEvent();
+          carEvent = new CarEvent(CarEvent::MOVE_BACKWARD);
           break;
-//        case IR_KEY_RIGHT_1:
-//        case IR_KEY_RIGHT_2:
-//          break;
-//        case IR_KEY_LEFT_1:
-//        case IR_KEY_LEFT_2:
-//          break;
+        case IR_KEY_RIGHT_1:
+        case IR_KEY_RIGHT_2:
+          carEvent = new CarEvent(CarEvent::MOVE_RIGHT);
+          break;
+        case IR_KEY_LEFT_1:
+        case IR_KEY_LEFT_2:
+          carEvent = new CarEvent(CarEvent::MOVE_LEFT);
+          break;
         case IR_KEY_STOP_1:
         case IR_KEY_STOP_2:       
-          carEvent = new CarMoveStopEvent();
+          carEvent = new CarEvent(CarEvent::MOVE_STOP);
           break;
       }
       if (currentValue >= 0){

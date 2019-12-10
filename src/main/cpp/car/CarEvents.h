@@ -6,20 +6,27 @@ class CarEvent : public EventBase {
     enum EventType {
       MOVE_STOP,
       MOVE_FORWARD,
-      MOVE_BACKWARD
+      MOVE_BACKWARD,
+      MOVE_LEFT,
+      MOVE_RIGHT,
+      SPIN_RIGHT_OVER,
+      SPIN_LEFT_OVER,
+      TURN_RIGHT_OVER,
+      TURN_LEFT_OVER
     };
+    CarEvent(EventType event);
+    int CarEvent::eventType();
+
+  private:
+    EventType event;
 };
 
-class CarMoveForwardEvent : public CarEvent {
-  public: int eventType(){ return CarEvent::MOVE_FORWARD; }
+CarEvent::CarEvent(EventType event) {
+  this->event = event;
 };
 
-class CarMoveBackwardEvent : public CarEvent {
-  public: int eventType(){ return CarEvent::MOVE_BACKWARD; }
-};
-
-class CarMoveStopEvent : public CarEvent {
-  public: int eventType(){ return CarEvent::MOVE_STOP; }
+int CarEvent::eventType() {
+  return this->event;
 };
 
 #endif

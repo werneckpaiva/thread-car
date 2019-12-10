@@ -16,7 +16,7 @@ class RunOnceTimer : public ActionScheduler {
       if (this->currentTask != NULL){
         currentTask->execute();
       }
-      this->pause();
+      this->cancelSchedule();
       return 0;
     };
 
@@ -24,6 +24,11 @@ class RunOnceTimer : public ActionScheduler {
     void scheduleTask(RunnableTask *task, int interval){
       this->currentTask = task;
       this->continueRunning(interval);
+    };
+
+    void cancelSchedule() {
+      this->currentTask = NULL;
+      this->pause();
     };
 };
 
