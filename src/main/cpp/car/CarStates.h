@@ -1,5 +1,9 @@
-#ifndef CarContrpol_h
-#define CarContrpol_h
+#include "RunOnceTimer.h"
+#include "CarMovement.h"
+#include "CarModuleControl.h"
+
+#ifndef CarMovementStates_h
+#define CarMovementStates_h
 
 //    enum STATE {
 //        MOVING_FORWARD_RIGHT,
@@ -8,13 +12,13 @@
 //        MOVING_BACKWARD_RIGHT,
 //    };
 
-class CarStateControl {
+class CarMovementStateControl {
   private:
     RunOnceTimer *runOnceTimer;
     CarMovement *carMovement;
     EventBus *eventBus;
   public:
-    CarStateControl(CarMovement *carMovement, EventBus *eventBus){
+    CarMovementStateControl(CarMovement *carMovement, EventBus *eventBus){
       this->carMovement = carMovement;
       this->eventBus = eventBus;
       this->runOnceTimer = new RunOnceTimer();
@@ -25,77 +29,75 @@ class CarStateControl {
     RunOnceTimer* getRunOnceTimer(){ return this->runOnceTimer;};
 };
 
-class CarState {
+class CarMovementState : public CarState{
   protected:
-    CarStateControl *control;
+    CarMovementStateControl *control;
   public:
-    virtual String stateName();
-    CarState(CarStateControl *control){
+    CarMovementState(CarMovementStateControl *control){
       this->control = control;
     }
-    virtual CarState* transition(CarEvent *event);
 };
 
-class StoppedState : public CarState {
+class StoppedState : public CarMovementState {
   public:
-    StoppedState(CarStateControl *control);
-    CarState* transition(CarEvent *event);
+    StoppedState(CarMovementStateControl *control);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "Stopped"; };
 };
 
-class MovingForwardState : public CarState {
+class MovingForwardState : public CarMovementState {
 
   private:
     static const int ACCELERATION_INCREMENT = 20;
     int initialSpeed;
-    CarState* accelerate(int increment);
-    CarState* slowDown(int increment);
+    CarMovementState* accelerate(int increment);
+    CarMovementState* slowDown(int increment);
 
   public:
-//    MovingForwardState(CarStateControl *control);
-    MovingForwardState(CarStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
-    CarState* transition(CarEvent *event);
+//    MovingForwardState(CarMovementStateControl *control);
+    MovingForwardState(CarMovementStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingForward"; };
 };
 
-class MovingBackwardState : public CarState {
+class MovingBackwardState : public CarMovementState {
 
   private:
     static const int ACCELERATION_INCREMENT = 20;
     int initialSpeed;
-    CarState* accelerate(int increment);
-    CarState* slowDown(int increment);
+    CarMovementState* accelerate(int increment);
+    CarMovementState* slowDown(int increment);
 
   public:
-    MovingBackwardState(CarStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
-    CarState* transition(CarEvent *event);
+    MovingBackwardState(CarMovementStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingBackward"; };
 };
 
-class SpinningRightState : public CarState, public RunnableTask{
+class SpinningRightState : public CarMovementState, public RunnableTask{
   private:
     static const int SPINNING_TIMER = 160;
     void spinRight();
   public:
-    SpinningRightState(CarStateControl *control);
-    CarState* transition(CarEvent *event);
+    SpinningRightState(CarMovementStateControl *control);
+    CarMovementState* transition(CarEvent *event);
     void execute();
     String stateName(){return "SpinningRight"; };
 };
 
-class SpinningLeftState : public CarState, public RunnableTask{
+class SpinningLeftState : public CarMovementState, public RunnableTask{
 
   private:
     static const int SPINNING_TIMER = 160;
     void spinLeft();
   public:
-    SpinningLeftState(CarStateControl *control);
-    CarState* transition(CarEvent *event);
+    SpinningLeftState(CarMovementStateControl *control);
+    CarMovementState* transition(CarEvent *event);
     void execute();
     String stateName(){return "SpinningLeft"; };
 };
 
-class MovingForwardRightState : public CarState, public RunnableTask{
+class MovingForwardRightState : public CarMovementState, public RunnableTask{
 
   private:
     static const int TURN_TIMER = 160;
@@ -103,12 +105,12 @@ class MovingForwardRightState : public CarState, public RunnableTask{
     void turnRight();
     void execute();
   public:
-    MovingForwardRightState(CarStateControl *control, int initialSpeed);
-    CarState* transition(CarEvent *event);
+    MovingForwardRightState(CarMovementStateControl *control, int initialSpeed);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingForwardRight"; };
 };
 
-class MovingForwardLeftState : public CarState, public RunnableTask{
+class MovingForwardLeftState : public CarMovementState, public RunnableTask{
 
   private:
     static const int TURN_TIMER = 160;
@@ -116,12 +118,12 @@ class MovingForwardLeftState : public CarState, public RunnableTask{
     void turnLeft();
     void execute();
   public:
-    MovingForwardLeftState(CarStateControl *control, int initialSpeed);
-    CarState* transition(CarEvent *event);
+    MovingForwardLeftState(CarMovementStateControl *control, int initialSpeed);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingForwardLeft"; };
 };
 
-class MovingBackwardRightState : public CarState, public RunnableTask{
+class MovingBackwardRightState : public CarMovementState, public RunnableTask{
 
   private:
     static const int TURN_TIMER = 160;
@@ -129,12 +131,12 @@ class MovingBackwardRightState : public CarState, public RunnableTask{
     void turnRight();
     void execute();
   public:
-    MovingBackwardRightState(CarStateControl *control, int initialSpeed);
-    CarState* transition(CarEvent *event);
+    MovingBackwardRightState(CarMovementStateControl *control, int initialSpeed);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingBackwardRight"; };
 };
 
-class MovingBackwardLeftState : public CarState, public RunnableTask{
+class MovingBackwardLeftState : public CarMovementState, public RunnableTask{
 
   private:
     static const int TURN_TIMER = 160;
@@ -142,58 +144,58 @@ class MovingBackwardLeftState : public CarState, public RunnableTask{
     void turnLeft();
     void execute();
   public:
-    MovingBackwardLeftState(CarStateControl *control, int initialSpeed);
-    CarState* transition(CarEvent *event);
+    MovingBackwardLeftState(CarMovementStateControl *control, int initialSpeed);
+    CarMovementState* transition(CarEvent *event);
     String stateName(){return "MovingBackwardLeft"; };
 };
 
 // Constructors -----------------------------------
 
-StoppedState :: StoppedState(CarStateControl *control) : CarState(control) {
+StoppedState :: StoppedState(CarMovementStateControl *control) : CarMovementState(control) {
   this->control->getCarMovement()->stop();
 };
 
-MovingForwardState :: MovingForwardState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingForwardState :: MovingForwardState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->control->getCarMovement()->moveForward(initialSpeed);
 };
 
-MovingBackwardState :: MovingBackwardState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingBackwardState :: MovingBackwardState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->control->getCarMovement()->moveBackward(initialSpeed);
 }
 
-SpinningRightState :: SpinningRightState(CarStateControl *control) : CarState(control) {
+SpinningRightState :: SpinningRightState(CarMovementStateControl *control) : CarMovementState(control) {
   this->spinRight();
 };
 
-SpinningLeftState :: SpinningLeftState(CarStateControl *control) : CarState(control) {
+SpinningLeftState :: SpinningLeftState(CarMovementStateControl *control) : CarMovementState(control) {
   this->spinLeft();
 };
 
-MovingForwardRightState :: MovingForwardRightState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingForwardRightState :: MovingForwardRightState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->turnRight();
 };
 
-MovingForwardLeftState :: MovingForwardLeftState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingForwardLeftState :: MovingForwardLeftState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->turnLeft();
 };
 
-MovingBackwardRightState :: MovingBackwardRightState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingBackwardRightState :: MovingBackwardRightState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->turnRight();
 };
 
-MovingBackwardLeftState :: MovingBackwardLeftState(CarStateControl *control, int initialSpeed) : CarState(control) {
+MovingBackwardLeftState :: MovingBackwardLeftState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
   this->initialSpeed = initialSpeed;
   this->turnLeft();
 };
 
 // State Machine ---------------------------------------
 
-CarState* StoppedState::transition(CarEvent *event) {
+CarMovementState* StoppedState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_FORWARD:
       return new MovingForwardState(this->control, 20);
@@ -207,7 +209,7 @@ CarState* StoppedState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingForwardState::transition(CarEvent *event) {
+CarMovementState* MovingForwardState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -223,7 +225,7 @@ CarState* MovingForwardState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingBackwardState::transition(CarEvent *event) {
+CarMovementState* MovingBackwardState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -239,7 +241,7 @@ CarState* MovingBackwardState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* SpinningRightState::transition(CarEvent *event) {
+CarMovementState* SpinningRightState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_RIGHT:
       this->control->getRunOnceTimer()->cancelSchedule();
@@ -251,7 +253,7 @@ CarState* SpinningRightState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* SpinningLeftState::transition(CarEvent *event) {
+CarMovementState* SpinningLeftState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_LEFT:
       this->control->getRunOnceTimer()->cancelSchedule();
@@ -263,7 +265,7 @@ CarState* SpinningLeftState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingForwardRightState::transition(CarEvent *event) {
+CarMovementState* MovingForwardRightState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -276,7 +278,7 @@ CarState* MovingForwardRightState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingForwardLeftState::transition(CarEvent *event) {
+CarMovementState* MovingForwardLeftState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -289,7 +291,7 @@ CarState* MovingForwardLeftState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingBackwardRightState::transition(CarEvent *event) {
+CarMovementState* MovingBackwardRightState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -302,7 +304,7 @@ CarState* MovingBackwardRightState::transition(CarEvent *event) {
   return this;
 };
 
-CarState* MovingBackwardLeftState::transition(CarEvent *event) {
+CarMovementState* MovingBackwardLeftState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
       return new StoppedState(this->control);
@@ -317,11 +319,11 @@ CarState* MovingBackwardLeftState::transition(CarEvent *event) {
 
 // Moving Forward -----------------------------------
 
-CarState* MovingForwardState::accelerate(int increment){
+CarMovementState* MovingForwardState::accelerate(int increment){
   return new MovingForwardState(this->control, this->initialSpeed + increment);
 };
 
-CarState* MovingForwardState::slowDown(int increment){
+CarMovementState* MovingForwardState::slowDown(int increment){
   int newSpeed = this->initialSpeed - increment;
   if (newSpeed <= 0) return new StoppedState(this->control);
   return new MovingForwardState(this->control, newSpeed);
@@ -329,11 +331,11 @@ CarState* MovingForwardState::slowDown(int increment){
 
 // Moving Backward -----------------------------------
 
-CarState* MovingBackwardState::accelerate(int increment){
+CarMovementState* MovingBackwardState::accelerate(int increment){
   return new MovingBackwardState(this->control, this->initialSpeed + increment);
 };
 
-CarState* MovingBackwardState::slowDown(int increment){
+CarMovementState* MovingBackwardState::slowDown(int increment){
   int newSpeed = this->initialSpeed - increment;
   if (newSpeed <= 0) return new StoppedState(this->control);
   return new MovingBackwardState(newSpeed);

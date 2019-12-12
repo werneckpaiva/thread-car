@@ -1,33 +1,31 @@
-#include "RunOnceTimer.h"
-#include "CarStates.h"
+#ifndef CarModuleControl_h
+#define CarModuleControl_h
 
-#ifndef CarControl_h
-#define CarControl_h
+class CarState {
+  public:
+    virtual String stateName();
+    virtual CarState* transition(CarEvent *event);
+};
 
-class CarControl : public EventListener{
+class CarModuleControl : public EventListener{
 
  private:
-    CarMovement *carMovement;
     EventBus *eventBus;
     CarState *currentState;
 
   public:
-    CarControl(CarMovement *carMovement, EventBus *eventBus);
+    CarModuleControl(EventBus *eventBus, CarState *initialState);
     void receiveEvent(EventBase *event);
-    CarMovement* getCarMovement();
-    EventBus* CarControlgetEventBus();
-    RunOnceTimer* getRunOnceTimer();
     void setup(){}
 };
 
-CarControl::CarControl(CarMovement *carMovement, EventBus *eventBus){
-  this->carMovement = carMovement;
+CarModuleControl::CarModuleControl(EventBus *eventBus, CarState *initialState){
   this->eventBus = eventBus;
-  this->currentState = new StoppedState(new CarStateControl(carMovement, eventBus));
+  this->currentState = initialState;
   this->eventBus->addEventListener(this);
 };
 
-void CarControl::receiveEvent(EventBase *event){
+void CarModuleControl::receiveEvent(EventBase *event){
    Serial.print(">>>>>> Car control: ");
    Serial.println(event->eventType());
    Serial.print("OLD State: ");
