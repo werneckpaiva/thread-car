@@ -5,7 +5,10 @@
 #include "CarMovement.h"
 #include "CarModuleControl.h"
 #include "IRCarControl.h"
+#include "SerialCarControl.h"
 #include "DistanceDetector.h"
+#include "DistanceDetectionState.h"
+#include "AutoPilot.h"
 
 
 #define DIR_1_L_PIN      2    // Motor direction
@@ -27,19 +30,28 @@ CarMovement carMovement(DIR_1_L_PIN, DIR_2_L_PIN, SPEED_L_PIN,
 
 EventBus eventBus;
 
-CarModuleControl carMovementControl(&eventBus, new StoppedState(new CarMovementStateControl(&carMovement, &eventBus)));
+CarModuleControl carMovementControl(&eventBus, 
+  new StoppedCarMovementState(
+    new CarMovementStateControl(&carMovement, &eventBus)));
 
 DistanceDetector distanceDetector(SERVO_PIN, ECHO_PIN, TRIG_PIN);
-//CarModuleControl distanceDetectionControl();
+CarModuleControl distanceDetectionControl(&eventBus, 
+  new StoppedDistanceDetectionState(
+     new DistanceDetectionStateControl(&distanceDetector, &eventBus)));
 
 IRCarControl irCarControl(IR_PIN, &eventBus);
+SerialCarControl serialCarControl(&eventBus);
 
+CarModuleControl autoPilot(&eventBus, new MonitoringAutoPilotState(&eventBus));
 
 void setup(){
-  Serial.begin(9600);
-  carMovement.setup();
-  carMovementControl.setup();
+  serialCarControl.setup();
   irCarControl.setup();
+
+  carMovement.setup();
+  distanceDetector.setup();
+  carMovementControl.setup();
+  autoPilot.setup();
 }
 
 void loop() {

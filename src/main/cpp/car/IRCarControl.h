@@ -71,8 +71,8 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
           break;
         case IR_KEY_LEFT_1:
         case IR_KEY_LEFT_2:
-          carEvent = new CarEvent(CarEvent::MOVE_LEFT);
-          break;
+            carEvent = new CarEvent(CarEvent::MOVE_LEFT); 
+            break;
         case IR_KEY_STOP_1:
         case IR_KEY_STOP_2:       
           carEvent = new CarEvent(CarEvent::MOVE_STOP);
@@ -84,7 +84,7 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
       return carEvent;
   }
   return NULL;
-}
+};
 
 
 unsigned long IRCarControl::run(){

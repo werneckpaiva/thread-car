@@ -26,18 +26,16 @@ CarModuleControl::CarModuleControl(EventBus *eventBus, CarState *initialState){
 };
 
 void CarModuleControl::receiveEvent(EventBase *event){
-   Serial.print(">>>>>> Car control: ");
-   Serial.println(event->eventType());
-   Serial.print("OLD State: ");
-   Serial.println(currentState->stateName());
-   CarState *oldState = this->currentState;
-   CarEvent *carEvent = (CarEvent *) event;
-   this->currentState = this->currentState->transition(carEvent);
-   Serial.print("NEW State: ");
-   Serial.println(currentState->stateName());
-   if (oldState != this->currentState){
-     delete oldState;
-   }
+  CarState *oldState = this->currentState;
+  CarEvent *carEvent = (CarEvent *) event;
+  this->currentState = this->currentState->transition(event);
+  if (oldState != this->currentState){
+    Serial.print("State changed. ");
+    Serial.print(oldState->stateName());
+    Serial.print(" -> ");
+    Serial.println(this->currentState->stateName());
+    delete oldState;
+  }
 };
 
 #endif

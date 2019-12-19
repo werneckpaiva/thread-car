@@ -35,18 +35,17 @@ class EventBus{
 
   public:
     void addEventListener(EventListener *listener){
-      ListenerNode *newListerNode = new ListenerNode(listener);
-      if (this->rootListenerList == NULL){
-        this->rootListenerList = newListerNode;
-      } else {
-        this->rootListenerList->next = newListerNode;
-      }
+      ListenerNode *current = this->rootListenerList;
+      this->rootListenerList = new ListenerNode(listener);
+      this->rootListenerList->next = current;
     }
 
     void dispatchEvent(EventBase *event){
       if (event == NULL) return;
       ListenerNode *currentListenerNode = this->rootListenerList;
+      int count=0;
       while (currentListenerNode != NULL){
+        count++;
         currentListenerNode->getListener()->receiveEvent(event);
         currentListenerNode = currentListenerNode->next;
       }

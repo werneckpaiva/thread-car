@@ -1,4 +1,4 @@
-#include "ActionScheduler.h"
+  #include "ActionScheduler.h"
 
 #ifndef RunOnceTimer_h
 #define RunOnceTimer_h
@@ -8,15 +8,17 @@ class RunnableTask {
     virtual void execute();
 };
 
-class RunOnceTimer : public ActionScheduler {
+class RunTimer : public ActionScheduler {
+
+  protected:
+    RunnableTask *currentTask = NULL;
 
   private:
-    RunnableTask *currentTask = NULL;
     unsigned long run() {
       if (this->currentTask != NULL){
+        Serial.println("Execute!!");
         currentTask->execute();
       }
-      this->cancelSchedule();
       return 0;
     };
 
@@ -29,6 +31,18 @@ class RunOnceTimer : public ActionScheduler {
     void cancelSchedule() {
       this->currentTask = NULL;
       this->pause();
+    };
+};
+
+class RunOnceTimer : public RunTimer {
+
+  private:
+    unsigned long run() {
+      if (this->currentTask != NULL){
+        currentTask->execute();
+      }
+      this->cancelSchedule();
+      return 0;
     };
 };
 
