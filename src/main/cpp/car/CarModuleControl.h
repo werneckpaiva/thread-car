@@ -3,7 +3,7 @@
 
 class CarState {
   public:
-    virtual String stateName();
+    virtual char* stateName();
     virtual CarState* transition(CarEvent *event);
 };
 

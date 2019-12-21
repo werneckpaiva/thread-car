@@ -34,7 +34,7 @@ class StoppedDistanceDetectionState : public DistanceDetectionState {
   public:
     StoppedDistanceDetectionState(DistanceDetectionStateControl *control);
     DistanceDetectionState* transition(CarEvent *event);
-    String stateName(){return "StoppedDistanceDetectionState"; };
+    char * stateName(){return "StoppedDistanceDetectionState"; };
 };
 
 class ScanningDistanceDetectionState : public DistanceDetectionState, public RunnableTask {
@@ -49,7 +49,7 @@ class ScanningDistanceDetectionState : public DistanceDetectionState, public Run
   public:
     ScanningDistanceDetectionState(DistanceDetectionStateControl *control);
     DistanceDetectionState* transition(CarEvent *event);
-    String stateName(){return "ScanningDetectionState"; };
+    char * stateName(){return "ScanningDetectionState"; };
     void execute();
 };
 

@@ -1,3 +1,5 @@
+#include "RunOnceTimer.h"
+
 #ifndef EventBus_h
 #define EventBus_h
 
@@ -29,11 +31,18 @@ EventListener* ListenerNode::getListener(){
   return this->listener;
 }
 
-class EventBus{
+class EventBus : public RunnableTask{
   private:
     ListenerNode *rootListenerList = NULL;
+    RunOnceTimer *runOnceTimer;
+    EventBase *nextEvent = NULL;
 
   public:
+    EventBus(){
+      this->runOnceTimer =  new RunOnceTimer();
+      this->runOnceTimer->start(1000);
+    }
+  
     void addEventListener(EventListener *listener){
       ListenerNode *current = this->rootListenerList;
       this->rootListenerList = new ListenerNode(listener);
@@ -43,14 +52,26 @@ class EventBus{
     void dispatchEvent(EventBase *event){
       if (event == NULL) return;
       ListenerNode *currentListenerNode = this->rootListenerList;
-      int count=0;
       while (currentListenerNode != NULL){
-        count++;
         currentListenerNode->getListener()->receiveEvent(event);
         currentListenerNode = currentListenerNode->next;
       }
       delete(event);
     }
+
+    void dispatchTimedEvent(EventBase *event, int interval, EventBase *nextEvent){
+      this->nextEvent = nextEvent;
+      this->runOnceTimer->scheduleTask(this, interval);
+      this->dispatchEvent(event);
+    }
+
+    void execute(){
+      if (nextEvent != NULL){
+        Serial.println("Timed event!");
+        this->dispatchEvent(this->nextEvent);
+      }
+    }
+
 };
 
 #endif

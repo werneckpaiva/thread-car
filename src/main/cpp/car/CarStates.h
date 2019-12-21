@@ -35,7 +35,7 @@ class StoppedCarMovementState : public CarMovementState {
   public:
     StoppedCarMovementState(CarMovementStateControl *control);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "Stopped"; };
+    char *stateName(){return "Stopped"; };
 };
 
 class MovingForwardMovementState : public CarMovementState {
@@ -49,7 +49,7 @@ class MovingForwardMovementState : public CarMovementState {
     static const int ACCELERATION_INCREMENT = 20;
     MovingForwardMovementState(CarMovementStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingForward"; };
+    char *stateName(){return "MovingForward"; };
 };
 
 class MovingBackwardStateMovementState : public CarMovementState {
@@ -63,7 +63,7 @@ class MovingBackwardStateMovementState : public CarMovementState {
     static const int ACCELERATION_INCREMENT = 20;
     MovingBackwardStateMovementState(CarMovementStateControl *control, int initialSpeed=ACCELERATION_INCREMENT);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingBackward"; };
+    char *stateName(){return "MovingBackward"; };
 };
 
 class SpinningRightStateMovementState : public CarMovementState, public RunnableTask{
@@ -74,7 +74,7 @@ class SpinningRightStateMovementState : public CarMovementState, public Runnable
     SpinningRightStateMovementState(CarMovementStateControl *control);
     CarMovementState* transition(CarEvent *event);
     void execute();
-    String stateName(){return "SpinningRight"; };
+    char *stateName(){return "SpinningRight"; };
 };
 
 class SpinningLeftMovementState : public CarMovementState, public RunnableTask{
@@ -86,7 +86,7 @@ class SpinningLeftMovementState : public CarMovementState, public RunnableTask{
     SpinningLeftMovementState(CarMovementStateControl *control);
     CarMovementState* transition(CarEvent *event);
     void execute();
-    String stateName(){return "SpinningLeft"; };
+    char *stateName(){return "SpinningLeft"; };
 };
 
 class MovingForwardRightMovementState : public CarMovementState, public RunnableTask{
@@ -99,7 +99,7 @@ class MovingForwardRightMovementState : public CarMovementState, public Runnable
   public:
     MovingForwardRightMovementState(CarMovementStateControl *control, int initialSpeed);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingForwardRight"; };
+    char *stateName(){return "MovingForwardRight"; };
 };
 
 class MovingForwardLeftMovementState : public CarMovementState, public RunnableTask{
@@ -112,7 +112,7 @@ class MovingForwardLeftMovementState : public CarMovementState, public RunnableT
   public:
     MovingForwardLeftMovementState(CarMovementStateControl *control, int initialSpeed);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingForwardLeft"; };
+    char *stateName(){return "MovingForwardLeft"; };
 };
 
 class MovingBackwardRightMovementState : public CarMovementState, public RunnableTask{
@@ -125,7 +125,7 @@ class MovingBackwardRightMovementState : public CarMovementState, public Runnabl
   public:
     MovingBackwardRightMovementState(CarMovementStateControl *control, int initialSpeed);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingBackwardRight"; };
+    char *stateName(){return "MovingBackwardRight"; };
 };
 
 class MovingBackwardLeftMovementState : public CarMovementState, public RunnableTask{
@@ -138,7 +138,7 @@ class MovingBackwardLeftMovementState : public CarMovementState, public Runnable
   public:
     MovingBackwardLeftMovementState(CarMovementStateControl *control, int initialSpeed);
     CarMovementState* transition(CarEvent *event);
-    String stateName(){return "MovingBackwardLeft"; };
+    char *stateName(){return "MovingBackwardLeft"; };
 };
 
 // Constructors -----------------------------------

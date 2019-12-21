@@ -17,7 +17,7 @@ class CarMovement {
 
     void setMotorSpeed(int speedL,int speedR) {
         analogWrite(this->speedLeftPin, abs(speedL)); 
-        analogWrite(this->speedRightPin, abs(speedR));   
+        analogWrite(this->speedRightPin, abs(speedR));
     }
 
   public:

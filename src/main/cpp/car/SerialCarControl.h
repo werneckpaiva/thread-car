@@ -15,7 +15,7 @@ class SerialCarControl : public ActionScheduler {
     SerialCarControl(EventBus *eventBus);
     void setup();
     void processSerialBuffer();
-    void processCommand(String cmd);
+    void processCommand(char* cmd);
   
 };
 
@@ -34,25 +34,26 @@ unsigned long SerialCarControl :: run(){
 };
 
 void SerialCarControl :: processSerialBuffer() {
-  if(Serial.available()) {
-    String cmd = Serial.readStringUntil('\n');
+  size_t len = Serial.available();
+  if(len > 0) {
+    char cmd[len + 1];
+    Serial.readBytesUntil('\n', cmd, len);
+    cmd[len] = 0x00;
     this->processCommand(cmd);
-    Serial.flush();
+    delete(cmd);
   }
 };
 
-void SerialCarControl :: processCommand(String cmd) {
-  Serial.print("Serial command: ");
-  Serial.println(cmd);
+void SerialCarControl :: processCommand(char *cmd) {
   if (cmd == "UP") {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_FORWARD));
-  } else if (cmd == "DOWN") {
-    this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_BACKWARD));
-  } else if (cmd == "LEFT") {
+  } else if (strcmp(cmd, "DOWN")) {
+    this->eventBus->dispatchTimedEvent(new CarEvent(CarEvent::MOVE_BACKWARD), 1000, new CarEvent(CarEvent::MOVE_STOP));
+  } else if (strcmp(cmd, "LEFT")) {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_LEFT));
-  } else if (cmd == "RIGHT") {
+  } else if (strcmp(cmd, "RIGHT")) {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_RIGHT));
-  } else if (cmd == "STOP") {
+  } else if (strcmp(cmd, "STOP")) {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
   }
 }

@@ -1,4 +1,4 @@
-  #include "ActionScheduler.h"
+#include "ActionScheduler.h"
 
 #ifndef RunOnceTimer_h
 #define RunOnceTimer_h
@@ -16,7 +16,6 @@ class RunTimer : public ActionScheduler {
   private:
     unsigned long run() {
       if (this->currentTask != NULL){
-        Serial.println("Execute!!");
         currentTask->execute();
       }
       return 0;

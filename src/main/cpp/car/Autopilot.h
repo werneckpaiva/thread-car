@@ -17,7 +17,7 @@ class MonitoringAutoPilotState : public CarState{
     CarState* transition(CarEvent *event);
     void processDistance(DistanceDetectedEvent *event);
     void speedChanged(SpeedChangedEvent *event);
-    String stateName(){return "MonitoringAutoPilotState"; };
+    char* stateName(){return "MonitoringAutoPilotState"; };
 };
 
 MonitoringAutoPilotState :: MonitoringAutoPilotState(EventBus *eventBus){

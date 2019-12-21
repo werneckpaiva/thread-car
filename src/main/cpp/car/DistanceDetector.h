@@ -36,11 +36,9 @@ class DistanceDetector{
     };
 
     void moveHead(byte angle){
-      Serial.print("Angle: ");
-      Serial.println(angle);
-//      if (this->headAngle == angle) {
-//        return;
-//      }
+      if (this->headAngle == angle) {
+        return;
+      }
       if (angle < DistanceDetector::MIN_HEAD_ANGLE) {
         angle = DistanceDetector::MIN_HEAD_ANGLE;
       }
