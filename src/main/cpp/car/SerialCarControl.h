@@ -14,7 +14,7 @@ class SerialCarControl : public RunnableTask {
     SerialCarControl(EventBus *eventBus);
     void setup();
     void processSerialBuffer();
-    void processCommand(String cmd);
+    void processCommand(char cmd);
   
 };
 
@@ -24,7 +24,7 @@ SerialCarControl::SerialCarControl(EventBus *eventBus){
 
 void SerialCarControl :: setup(){
   Serial.begin(9600);
-  TaskScheduler::scheduleRecurrentTask(this, 20);
+  TaskScheduler::scheduleRecurrentTask(this, 50);
 };
 
 void SerialCarControl :: execute(){
@@ -34,24 +34,26 @@ void SerialCarControl :: execute(){
 void SerialCarControl :: processSerialBuffer() {
   size_t len = Serial.available();
   if(len > 0) {
-    String cmd = Serial.readStringUntil('\n');
+//    String cmd = Serial.readStringUntil('\n');
+    char cmd = Serial.read();
     this->processCommand(cmd);
   }
 };
 
-void SerialCarControl :: processCommand(String cmd) {
-  Serial.print("SERIAL CMD: <");
-  Serial.print(cmd);
-  Serial.println(">");
-  if (cmd=="UP") {
+void SerialCarControl :: processCommand(char cmd) {
+//  Serial.print("SERIAL CMD: <");
+//  Serial.print(cmd);
+//  Serial.println(">");
+  if (cmd=='U') {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_FORWARD));
-  } else if (cmd=="DOWN") {
-    this->eventBus->dispatchTimedEvent(new CarEvent(CarEvent::MOVE_BACKWARD), 1000, new CarEvent(CarEvent::MOVE_STOP));
-  } else if (cmd=="LEFT") {
+  } else if (cmd=='D') {
+    this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_BACKWARD));
+    this->eventBus->dispatchTimedEvent(new CarEvent(CarEvent::MOVE_STOP), 2000);
+  } else if (cmd=='L') {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_LEFT));
-  } else if (cmd=="RIGHT") {
+  } else if (cmd=='R') {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_RIGHT));
-  } else if (cmd=="STOP") {
+  } else if (cmd=='S') {
     this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
   }
 }

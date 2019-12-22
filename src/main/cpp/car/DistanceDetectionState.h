@@ -7,18 +7,14 @@ class DistanceDetectionStateControl {
   private:
     EventBus *eventBus;
     DistanceDetector *distanceDetector;
-    RunTimer *runTimer;
 
   public:
     DistanceDetectionStateControl(DistanceDetector *distanceDetector, EventBus *eventBus){
       this->distanceDetector = distanceDetector;
       this->eventBus = eventBus;
-      this->runTimer = new RunTimer();
-      this->runTimer->start(1000);
     }
     DistanceDetector* getDistanceDetector(){ return this->distanceDetector; };
     EventBus* getEventBus(){ return this->eventBus; };
-    RunTimer* getRunTimer(){ return this->runTimer; }
 };
 
 class DistanceDetectionState : public CarState{
@@ -59,7 +55,7 @@ StoppedDistanceDetectionState :: StoppedDistanceDetectionState(DistanceDetection
 };
 
 ScanningDistanceDetectionState :: ScanningDistanceDetectionState(DistanceDetectionStateControl *control) : DistanceDetectionState(control) {
-  this->control->getRunTimer()->scheduleTask(this, ScanningDistanceDetectionState::HEAD_TIMER);
+  TaskScheduler::scheduleRecurrentTask(this, ScanningDistanceDetectionState::HEAD_TIMER);
 };
 
 
@@ -75,7 +71,7 @@ DistanceDetectionState* StoppedDistanceDetectionState::transition(CarEvent *even
 DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
-      this->control->getRunTimer()->cancelSchedule();
+//      this->control->getRunTimer()->cancelSchedule();
       return new StoppedDistanceDetectionState(this->control);
   }
   return this;

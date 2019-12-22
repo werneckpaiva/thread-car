@@ -21,7 +21,7 @@ def main():
 def handle_car_action(obj):
     action_value = obj["action"]
     print("action value: %s" % action_value)
-    cmd_value = action_value + "\n"
+    cmd_value = action_value # + "\n"
     socketCar.send(cmd_value.encode())
 
 if __name__ == '__main__':

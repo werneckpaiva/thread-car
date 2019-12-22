@@ -1,6 +1,5 @@
 #include "EventBus.h"
 #include "CarEvents.h"
-#include "ActionScheduler.h"
 #include "CarStates.h"
 #include "CarMovement.h"
 #include "CarModuleControl.h"
@@ -55,7 +54,6 @@ void setup(){
 }
 
 void loop() {
-  ActionScheduler::updateActions();
   TaskScheduler::process();
 
 }

@@ -30,7 +30,7 @@ void CarModuleControl::receiveEvent(EventBase *event){
   CarEvent *carEvent = (CarEvent *) event;
   this->currentState = this->currentState->transition(event);
   if (oldState != this->currentState){
-    Serial.print("State changed. ");
+    Serial.print("State changed: ");
     Serial.print(oldState->stateName());
     Serial.print(" -> ");
     Serial.println(this->currentState->stateName());
