@@ -1,4 +1,3 @@
-#include "ActionScheduler.h"
 #include <IRremote.h>
 
 #define IR_KEY_UP_1          0x00FF18E7
@@ -16,7 +15,7 @@
 #define IRCarControl_h
 
 
-class IRCarControl : public ActionScheduler {
+class IRCarControl : public RunnableTask {
 
   private:
     EventBus *eventBus;
@@ -26,13 +25,13 @@ class IRCarControl : public ActionScheduler {
 
     int lastSelectedKey = -1;
 
-    unsigned long run();
+    void execute();
 
   public:
     IRCarControl(int irPin, EventBus *eventBus);
     CarEvent* readIrKeyAsCarEvent();
     void setup(){
-      this->start(10, true);
+      TaskScheduler::scheduleRecurrentTask(this, 10);
       irrecv->enableIRIn();
       irrecv->blink13(true);
     }
@@ -86,13 +85,11 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
   return NULL;
 };
 
-
-unsigned long IRCarControl::run(){
+void IRCarControl::execute(){
   CarEvent *event = this->readIrKeyAsCarEvent();
   if (event != NULL) {
     this->eventBus->dispatchEvent(event);
   }
-  return 0;
 };
 
 #endif

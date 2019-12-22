@@ -56,4 +56,6 @@ void setup(){
 
 void loop() {
   ActionScheduler::updateActions();
+  TaskScheduler::process();
+
 }

@@ -1,12 +1,9 @@
 #include "ActionScheduler.h"
+#include "TaskScheduler.h"
 
 #ifndef RunOnceTimer_h
 #define RunOnceTimer_h
 
-class RunnableTask {
-  public:
-    virtual void execute();
-};
 
 class RunTimer : public ActionScheduler {
 
