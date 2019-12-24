@@ -6,22 +6,16 @@
 
 class MonitoringAutoPilotState : public CarState{
   private:
-    EventBus *eventBus;
     static const byte MIN_MOVING_DISTANCE = 10;
     static const byte MAX_MOVING_DISTANCE = 30;
     static const float MOVING_DISTANCE_DIFF = (MAX_MOVING_DISTANCE - MIN_MOVING_DISTANCE);
     byte currentSpeed = 0;
   
   public: 
-    MonitoringAutoPilotState(EventBus *eventBus);
     CarState* transition(CarEvent *event);
     void processDistance(DistanceDetectedEvent *event);
     void speedChanged(SpeedChangedEvent *event);
     char* stateName(){return "MonitoringAutoPilotState"; };
-};
-
-MonitoringAutoPilotState :: MonitoringAutoPilotState(EventBus *eventBus){
-  this->eventBus = eventBus;
 };
 
 CarState* MonitoringAutoPilotState::transition(CarEvent *event) {
@@ -47,7 +41,9 @@ void MonitoringAutoPilotState :: processDistance(DistanceDetectedEvent *event){
     hitDistance = MIN_MOVING_DISTANCE;
   }
   if (event->getDistance() < hitDistance){
-    this->eventBus->dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
+    Serial.print("Distance hit: ");
+    Serial.println(event->getDistance());
+    EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
   }
 };
 

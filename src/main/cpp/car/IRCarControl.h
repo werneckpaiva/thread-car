@@ -18,8 +18,6 @@
 class IRCarControl : public RunnableTask {
 
   private:
-    EventBus *eventBus;
-
     IRrecv *irrecv;
     decode_results irResults;
 
@@ -28,7 +26,7 @@ class IRCarControl : public RunnableTask {
     void execute();
 
   public:
-    IRCarControl(int irPin, EventBus *eventBus);
+    IRCarControl(int irPin);
     CarEvent* readIrKeyAsCarEvent();
     void setup(){
       TaskScheduler::scheduleRecurrentTask(this, 10);
@@ -37,8 +35,7 @@ class IRCarControl : public RunnableTask {
     }
 };
 
-IRCarControl::IRCarControl(int irPin, EventBus *eventBus){
-  this->eventBus = eventBus;
+IRCarControl::IRCarControl(int irPin){
   this->irrecv = new IRrecv(irPin);
 };
 
@@ -88,7 +85,7 @@ CarEvent* IRCarControl::readIrKeyAsCarEvent(){
 void IRCarControl::execute(){
   CarEvent *event = this->readIrKeyAsCarEvent();
   if (event != NULL) {
-    this->eventBus->dispatchEvent(event);
+    EventBus::dispatchEvent(event);
   }
 };
 

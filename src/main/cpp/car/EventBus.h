@@ -1,5 +1,7 @@
 #include "TaskScheduler.h"
 
+#define VERBOSE 1
+
 #ifndef EventBus_h
 #define EventBus_h
 
@@ -34,11 +36,10 @@ class EventBus;
 
 class EventBusTimedEventRunner : public RunnableTask {
   private:
-    EventBus *eventBus;
     EventBase *event;
 
   public:
-    EventBusTimedEventRunner(EventBus *eventBus, EventBase *event);
+    EventBusTimedEventRunner(EventBase *event);
     int getEventType(){
       return this->event->eventType();
     }
@@ -48,26 +49,30 @@ class EventBusTimedEventRunner : public RunnableTask {
 class EventBus{
   private:
     // Keep tracking of listeners
-    ListenerNode *rootListenerList = NULL;
+    static ListenerNode *rootListenerList;
 
   public:
-    void addEventListener(EventListener *listener);
-    void dispatchEvent(EventBase *event);
-    EventBusTimedEventRunner* dispatchTimedEvent(EventBase *event, int interval);
+    static void addEventListener(EventListener *listener);
+    static void dispatchEvent(EventBase *event);
+    static EventBusTimedEventRunner* dispatchTimedEvent(EventBase *event, int interval);
 };
 
+ListenerNode * EventBus :: rootListenerList = NULL;
+
+
 void EventBus :: addEventListener(EventListener *listener){
-  ListenerNode *current = this->rootListenerList;
-  this->rootListenerList = new ListenerNode(listener);
-  this->rootListenerList->next = current;
+  ListenerNode *current = EventBus::rootListenerList;
+  EventBus::rootListenerList = new ListenerNode(listener);
+  EventBus::rootListenerList->next = current;
 };
 
 void EventBus :: dispatchEvent(EventBase *event){
-  Serial.print("Dispatch EVENT: ");
-  Serial.println(event->eventType());
-
+  #ifdef VERBOSE
+    Serial.print("Dispatch EVENT: ");
+    Serial.println(event->eventType());
+  #endif
   if (event == NULL) return;
-  ListenerNode *currentListenerNode = this->rootListenerList;
+  ListenerNode *currentListenerNode = EventBus::rootListenerList;
   while (currentListenerNode != NULL){
     currentListenerNode->getListener()->receiveEvent(event);
     currentListenerNode = currentListenerNode->next;
@@ -76,20 +81,21 @@ void EventBus :: dispatchEvent(EventBase *event){
 };
 
 EventBusTimedEventRunner* EventBus :: dispatchTimedEvent(EventBase *event, int interval){
-  EventBusTimedEventRunner *task = new EventBusTimedEventRunner(this, event);
+  EventBusTimedEventRunner *task = new EventBusTimedEventRunner(event);
   TaskScheduler::scheduleRunOnceTask(task, interval);
   return task;
 };
 
 
-EventBusTimedEventRunner :: EventBusTimedEventRunner(EventBus *eventBus, EventBase *event){
-  this->eventBus = eventBus;
+EventBusTimedEventRunner :: EventBusTimedEventRunner(EventBase *event){
   this->event = event;
 };
 
 void EventBusTimedEventRunner :: execute(){
-//  Serial.println("Timed event!");
-  this->eventBus->dispatchEvent(this->event);
+  #ifdef VERBOSE
+    Serial.println("Timed event!");
+  #endif
+  EventBus::dispatchEvent(this->event);
 };
 
 

@@ -52,12 +52,13 @@ class TaskQueueElement{
 class TaskScheduler{
 
   private:
-    static void removeTask(TaskQueueElement *taskQueueElement);
+    static void removeTaskElementFromQueue(TaskQueueElement *taskQueueElement);
     static TaskQueueElement *rootTaskQueueElement;
 
   public:
     static void scheduleRecurrentTask(RunnableTask *task, unsigned int period);
     static void scheduleRunOnceTask(RunnableTask *task, unsigned int period);
+    static void removeTask(RunnableTask *task);
     static void process();
 };
 
@@ -68,9 +69,7 @@ void TaskScheduler :: process(){
   TaskQueueElement *nextQueueTask;
   unsigned long currentTime;
 
-  int count=0;
   while(currentTaskQueueElement != NULL){
-    count++;
     currentTime = millis();
     nextQueueTask = currentTaskQueueElement->nextTaskQueueElement;
     if (currentTime >= currentTaskQueueElement->nextRun){
@@ -80,29 +79,40 @@ void TaskScheduler :: process(){
       if (currentTaskQueueElement->isRecurrent()){
         currentTaskQueueElement->nextRun = (currentTime + currentTaskQueueElement->recurrentPeriod);
       } else {
-        TaskScheduler::removeTask(currentTaskQueueElement);
+        TaskScheduler::removeTaskElementFromQueue(currentTaskQueueElement);
+        delete(currentTaskQueueElement);
       }
     }
     currentTaskQueueElement = nextQueueTask;
   }
 };
 
-void TaskScheduler :: removeTask(TaskQueueElement *taskQueueElement){
+void TaskScheduler :: removeTaskElementFromQueue(TaskQueueElement *taskQueueElement){
+  if (TaskScheduler::rootTaskQueueElement == NULL) return;
   if (TaskScheduler::rootTaskQueueElement == taskQueueElement){
-    TaskScheduler::rootTaskQueueElement = taskQueueElement->nextTaskQueueElement;
-    delete(taskQueueElement);
+    TaskScheduler::rootTaskQueueElement = TaskScheduler::rootTaskQueueElement->nextTaskQueueElement;
     return;
   }
   TaskQueueElement *currentTaskQueueElement = TaskScheduler::rootTaskQueueElement;
   while(currentTaskQueueElement != NULL){
     if (currentTaskQueueElement->nextTaskQueueElement == taskQueueElement){
       currentTaskQueueElement->nextTaskQueueElement = taskQueueElement->nextTaskQueueElement;
-      delete(taskQueueElement);
       return;
     }
     currentTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
   }
 };
+
+void TaskScheduler :: removeTask(RunnableTask *task){
+  TaskQueueElement *currentTaskQueueElement = TaskScheduler::rootTaskQueueElement;
+  while(currentTaskQueueElement != NULL){
+    if (currentTaskQueueElement->task == task){
+      TaskScheduler::removeTaskElementFromQueue(currentTaskQueueElement);
+      break;
+    }
+    currentTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
+  }
+}
 
 void TaskScheduler :: scheduleRecurrentTask(RunnableTask *task, unsigned int period){
   rootTaskQueueElement = new TaskQueueElement(task, period, TaskScheduler::rootTaskQueueElement);

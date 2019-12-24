@@ -5,16 +5,13 @@
 
 class DistanceDetectionStateControl {
   private:
-    EventBus *eventBus;
     DistanceDetector *distanceDetector;
 
   public:
-    DistanceDetectionStateControl(DistanceDetector *distanceDetector, EventBus *eventBus){
+    DistanceDetectionStateControl(DistanceDetector *distanceDetector){
       this->distanceDetector = distanceDetector;
-      this->eventBus = eventBus;
     }
     DistanceDetector* getDistanceDetector(){ return this->distanceDetector; };
-    EventBus* getEventBus(){ return this->eventBus; };
 };
 
 class DistanceDetectionState : public CarState{
@@ -36,7 +33,7 @@ class StoppedDistanceDetectionState : public DistanceDetectionState {
 class ScanningDistanceDetectionState : public DistanceDetectionState, public RunnableTask {
   protected:
     static const byte ANGLE_INCREMENT = 10;
-    static const byte HEAD_TIMER = 20;
+    static const byte HEAD_TIMER = 50;
   
     byte angle = 0;
     boolean movesClockwise = false;
@@ -71,7 +68,7 @@ DistanceDetectionState* StoppedDistanceDetectionState::transition(CarEvent *even
 DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVE_STOP:
-//      this->control->getRunTimer()->cancelSchedule();
+      TaskScheduler::removeTask(this);
       return new StoppedDistanceDetectionState(this->control);
   }
   return this;
@@ -81,7 +78,7 @@ DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *eve
 // Scanning --------------------------------------
 void ScanningDistanceDetectionState::execute() {
   byte distance = this->control->getDistanceDetector()->detectDistance();
-  this->control->getEventBus()->dispatchEvent(new DistanceDetectedEvent(this->angle, distance));
+  EventBus::dispatchEvent(new DistanceDetectedEvent(this->angle, distance));
   
   if (this->angle >= DistanceDetector::MAX_HEAD_ANGLE 
     || this->angle <= DistanceDetector::MIN_HEAD_ANGLE){

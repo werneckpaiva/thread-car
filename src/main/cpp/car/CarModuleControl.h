@@ -10,19 +10,17 @@ class CarState {
 class CarModuleControl : public EventListener{
 
  private:
-    EventBus *eventBus;
     CarState *currentState;
 
   public:
-    CarModuleControl(EventBus *eventBus, CarState *initialState);
+    CarModuleControl(CarState *initialState);
     void receiveEvent(EventBase *event);
     void setup(){}
 };
 
-CarModuleControl::CarModuleControl(EventBus *eventBus, CarState *initialState){
-  this->eventBus = eventBus;
+CarModuleControl::CarModuleControl(CarState *initialState){
   this->currentState = initialState;
-  this->eventBus->addEventListener(this);
+  EventBus::addEventListener(this);
 };
 
 void CarModuleControl::receiveEvent(EventBase *event){
@@ -30,10 +28,12 @@ void CarModuleControl::receiveEvent(EventBase *event){
   CarEvent *carEvent = (CarEvent *) event;
   this->currentState = this->currentState->transition(event);
   if (oldState != this->currentState){
+    #ifdef VERBOSE
     Serial.print("State changed: ");
     Serial.print(oldState->stateName());
     Serial.print(" -> ");
     Serial.println(this->currentState->stateName());
+    #endif
     delete oldState;
   }
 };
