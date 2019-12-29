@@ -4,7 +4,7 @@
 #include "CarMovement.h"
 #include "CarModuleControl.h"
 #include "IRCarControl.h"
-#include "SerialCarControl.h"
+//#include "SerialCarControl.h"
 #include "DistanceDetector.h"
 #include "DistanceDetectionState.h"
 #include "AutoPilot.h"
@@ -24,7 +24,7 @@
 #define ECHO_PIN         11   // Ultrasonic Echo
 #define TRIG_PIN         12   // Ultrasonic Trig
 
-#define SERVO_PIN        9
+#define SERVO_PIN        9 
 
 CarMovement carMovement(DIR_1_L_PIN, DIR_2_L_PIN, SPEED_L_PIN,
                         DIR_1_R_PIN, DIR_2_R_PIN, SPEED_R_PIN);
@@ -37,22 +37,22 @@ CarModuleControl distanceDetectionControl(new StoppedDistanceDetectionState(
      new DistanceDetectionStateControl(&distanceDetector)));
 
 IRCarControl irCarControl(IR_PIN);
-SerialCarControl serialCarControl;
+//SerialCarControl serialCarControl;
 
 CarModuleControl autoPilot(new MonitoringAutoPilotState());
 
 void setup(){
-  serialCarControl.setup();
+  Serial.begin(9600);
+//  serialCarControl.setup();
   irCarControl.setup();
 
   carMovement.setup();
-  distanceDetector.setup();
-
   carMovementControl.setup();
+  
+  distanceDetector.setup();
   autoPilot.setup();
 }
 
 void loop() {
   TaskScheduler::process();
-
-}
+}                                                                                              

@@ -1,7 +1,7 @@
+#define VERBOSE 0
+
 #include "CarMovement.h"
 #include "CarModuleControl.h"
-
-#define VERBOSE 1
 
 #ifndef CarMovementStates_h
 #define CarMovementStates_h
@@ -24,6 +24,24 @@ class CarMovementState : public CarState{
       this->control = control;
     }
 };
+
+class TimedState{
+  protected:
+    EventBusTimedEventRunner* timedEventRunner = NULL;
+    void cancelTimer(){
+      if (this->timedEventRunner != NULL) {
+        EventBus :: cancelTimedEvent(this->timedEventRunner);
+        this->timedEventRunner = NULL;
+      }
+    }
+
+    void startTimer(EventBase *event, int interval){
+      this->timedEventRunner = EventBus::dispatchTimedEvent(event, interval);
+    }
+
+};
+
+// Car Movement States ----------------------------
 
 class StoppedCarMovementState : public CarMovementState {
   public:
@@ -58,10 +76,9 @@ class MovingBackwardStateMovementState : public CarMovementState {
     char *stateName(){return "MovingBackward"; };
 };
 
-class SpinningRightStateMovementState : public CarMovementState{
+class SpinningRightStateMovementState : public CarMovementState, TimedState{
   private:
     static const int SPINNING_TIMER = 160;
-    EventBusTimedEventRunner* timedEventRunner = NULL;
     void spinRight();
   public:
     SpinningRightStateMovementState(CarMovementStateControl *control);
@@ -69,7 +86,7 @@ class SpinningRightStateMovementState : public CarMovementState{
     char *stateName(){return "SpinningRight"; };
 };
 
-class SpinningLeftMovementState : public CarMovementState{
+class SpinningLeftMovementState : public CarMovementState, TimedState{
   private:
     static const int SPINNING_TIMER = 160;
     EventBusTimedEventRunner* timedEventRunner = NULL;
@@ -80,11 +97,10 @@ class SpinningLeftMovementState : public CarMovementState{
     char *stateName(){return "SpinningLeft"; };
 };
 
-class MovingForwardRightMovementState : public CarMovementState{
+class MovingForwardRightMovementState : public CarMovementState, TimedState{
   private:
     static const int TURN_TIMER = 160;
     int initialSpeed=0;
-    EventBusTimedEventRunner* timedEventRunner = NULL;
     void turnRight();
   public:
     MovingForwardRightMovementState(CarMovementStateControl *control, int initialSpeed);
@@ -92,11 +108,10 @@ class MovingForwardRightMovementState : public CarMovementState{
     char *stateName(){return "MovingForwardRight"; };
 };
 
-class MovingForwardLeftMovementState : public CarMovementState {
+class MovingForwardLeftMovementState : public CarMovementState, TimedState {
   private:
     static const int TURN_TIMER = 160;
     int initialSpeed=0;
-    EventBusTimedEventRunner* timedEventRunner = NULL;
     void turnLeft();
   public:
     MovingForwardLeftMovementState(CarMovementStateControl *control, int initialSpeed);
@@ -104,11 +119,10 @@ class MovingForwardLeftMovementState : public CarMovementState {
     char *stateName(){return "MovingForwardLeft"; };
 };
 
-class MovingBackwardRightMovementState : public CarMovementState{
+class MovingBackwardRightMovementState : public CarMovementState, TimedState{
   private:
     static const int TURN_TIMER = 160;
     int initialSpeed=0;
-    EventBusTimedEventRunner* timedEventRunner = NULL;
     void turnRight();
   public:
     MovingBackwardRightMovementState(CarMovementStateControl *control, int initialSpeed);
@@ -116,12 +130,11 @@ class MovingBackwardRightMovementState : public CarMovementState{
     char *stateName(){return "MovingBackwardRight"; };
 };
 
-class MovingBackwardLeftMovementState : public CarMovementState{
+class MovingBackwardLeftMovementState : public CarMovementState, TimedState{
 
   private:
     static const int TURN_TIMER = 160;
     int initialSpeed=0;
-    EventBusTimedEventRunner* timedEventRunner = NULL;
     void turnLeft();
   public:
     MovingBackwardLeftMovementState(CarMovementStateControl *control, int initialSpeed);
@@ -133,17 +146,19 @@ class MovingBackwardLeftMovementState : public CarMovementState{
 
 StoppedCarMovementState :: StoppedCarMovementState(CarMovementStateControl *control) : CarMovementState(control) {
   this->control->getCarMovement()->stop();
+  EventBus::dispatchEvent(new CarEvent(CarEvent::MOVEMENT_STOPPED));
 };
 
 MovingForwardMovementState :: MovingForwardMovementState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
-  this->initialSpeed = initialSpeed;
   this->control->getCarMovement()->moveForward(initialSpeed);
-  EventBus::dispatchEvent(new SpeedChangedEvent(initialSpeed));
+  // Get Sepped from the CarMovement, which has a speed control
+  this->initialSpeed = this->control->getCarMovement()->getCurrentSpeed();
+  EventBus::dispatchEvent(new SpeedChangedEvent(this->initialSpeed));
 };
 
 MovingBackwardStateMovementState :: MovingBackwardStateMovementState(CarMovementStateControl *control, int initialSpeed) : CarMovementState(control) {
-  this->initialSpeed = initialSpeed;
   this->control->getCarMovement()->moveBackward(initialSpeed);
+  this->initialSpeed = this->control->getCarMovement()->getCurrentSpeed();
 }
 
 SpinningRightStateMovementState :: SpinningRightStateMovementState(CarMovementStateControl *control) : CarMovementState(control) {
@@ -309,7 +324,6 @@ CarMovementState* MovingForwardMovementState::accelerate(int increment){
 CarMovementState* MovingForwardMovementState::slowDown(int increment){
   int newSpeed = this->initialSpeed - increment;
   if (newSpeed <= 0) {
-    EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
     return new StoppedCarMovementState(this->control);
   }
   return new MovingForwardMovementState(this->control, newSpeed);
@@ -324,77 +338,57 @@ CarMovementState* MovingBackwardStateMovementState::accelerate(int increment){
 CarMovementState* MovingBackwardStateMovementState::slowDown(int increment){
   int newSpeed = this->initialSpeed - increment;
   if (newSpeed <= 0) {
-    EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
     return new StoppedCarMovementState(this->control);
   }
-  return new MovingBackwardStateMovementState(newSpeed);
+  return new MovingBackwardStateMovementState(this->control, newSpeed);
 };
 
 // Spinning Right ------------------------------------
 
 void SpinningRightStateMovementState::spinRight(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->spinRight(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::SPIN_RIGHT_OVER),
-    SpinningRightStateMovementState::SPINNING_TIMER);
+  this->startTimer(new CarEvent(CarEvent::SPIN_RIGHT_OVER), SpinningRightStateMovementState::SPINNING_TIMER);
 }
 
 // Spinning Left ------------------------------------
 
 void SpinningLeftMovementState::spinLeft(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->spinLeft(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::SPIN_LEFT_OVER), SpinningLeftMovementState::SPINNING_TIMER);
+  this->startTimer(new CarEvent(CarEvent::SPIN_LEFT_OVER), SpinningLeftMovementState::SPINNING_TIMER);
 }
 
 // MovingForwardRight ------------------------------
 
 void MovingForwardRightMovementState::turnRight(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->turnRightForward(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::TURN_RIGHT_OVER), MovingForwardRightMovementState::TURN_TIMER);
+  this->startTimer(new CarEvent(CarEvent::TURN_RIGHT_OVER), MovingForwardRightMovementState::TURN_TIMER);
 }
 
 // MovingForwardLeft ------------------------------
 
 void MovingForwardLeftMovementState::turnLeft(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->turnLeftForward(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::TURN_LEFT_OVER), MovingForwardLeftMovementState::TURN_TIMER);
+  this->startTimer(new CarEvent(CarEvent::TURN_LEFT_OVER), MovingForwardLeftMovementState::TURN_TIMER);
 }
 
 // MovingBackwardRight ------------------------------
 
 void MovingBackwardRightMovementState::turnRight(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->turnRightBackward(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::TURN_RIGHT_OVER), MovingBackwardRightMovementState::TURN_TIMER);
+  this->startTimer( new CarEvent(CarEvent::TURN_RIGHT_OVER), MovingBackwardRightMovementState::TURN_TIMER);
 }
 
 // MovingForwardLeft ------------------------------
 
 void MovingBackwardLeftMovementState::turnLeft(){
-  if (this->timedEventRunner != NULL) {
-    this->timedEventRunner->pauseTask();
-  }
+  this->cancelTimer();
   this->control->getCarMovement()->turnLeftBackward(CarMovement::MAX_SPEED);
-  this->timedEventRunner = EventBus::dispatchTimedEvent(
-    new CarEvent(CarEvent::TURN_LEFT_OVER), MovingBackwardLeftMovementState::TURN_TIMER);
+  this->startTimer(new CarEvent(CarEvent::TURN_LEFT_OVER), MovingBackwardLeftMovementState::TURN_TIMER);
 }
 
 #endif

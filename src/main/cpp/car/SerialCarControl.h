@@ -1,3 +1,5 @@
+#define VERBOSE 0
+
 #include "EventBus.h"
 
 #ifndef SerialCarControl_h
@@ -18,7 +20,7 @@ class SerialCarControl : public RunnableTask {
 
 void SerialCarControl :: setup(){
   Serial.begin(9600);
-  TaskScheduler::scheduleRecurrentTask(this, 50);
+  TaskScheduler::scheduleRecurrentTask(this, 30);
 };
 
 void SerialCarControl :: execute(){
@@ -35,9 +37,11 @@ void SerialCarControl :: processSerialBuffer() {
 };
 
 void SerialCarControl :: processCommand(char cmd) {
-//  Serial.print("SERIAL CMD: <");
-//  Serial.print(cmd);
-//  Serial.println(">");
+  #if VERBOSE > 0
+    Serial.print("SERIAL CMD: <");
+    Serial.print(cmd);
+    Serial.println(">");
+  #endif
   if (cmd=='U') {
     EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_FORWARD));
   } else if (cmd=='D') {

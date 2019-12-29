@@ -11,7 +11,7 @@ class DistanceDetector{
 
     Servo head;
     byte headAngle = 90;
-    static const double SOUND_SPEED = 0.01657;
+    static const double SOUND_SPEED = 0.01715;
 
   public:
     static const byte MAX_DISTANCE = 100;
@@ -36,6 +36,10 @@ class DistanceDetector{
     };
 
     void moveHead(byte angle){
+      #if VERBOSE > 1
+        Serial.print("Move head: ");
+        Serial.println(angle);
+      #endif
       if (this->headAngle == angle) {
         return;
       }
@@ -49,19 +53,24 @@ class DistanceDetector{
       head.write (angle);
     };
 
+    byte getHeadAngle(){
+      return this->headAngle;
+    }
+
     byte detectDistance(){
       long duration;
       byte distance;
       digitalWrite(this->triggerPin, LOW);
-      delayMicroseconds(5);
+      delayMicroseconds(2);
       digitalWrite(this->triggerPin, HIGH);
-      delayMicroseconds(15);
+      delayMicroseconds(10);
       digitalWrite(this->triggerPin, LOW);
       duration = pulseIn(this->echoPin, HIGH, 5000);
-      if (duration <= 5){
+      if (duration < 5){
         return DistanceDetector::MAX_DISTANCE;
       }
       distance = round(duration * DistanceDetector::SOUND_SPEED);
+     
       if (distance > DistanceDetector::MAX_DISTANCE) return DistanceDetector::MAX_DISTANCE;
       if (distance < DistanceDetector::MIN_DISTANCE) return DistanceDetector::MIN_DISTANCE;
       return distance;

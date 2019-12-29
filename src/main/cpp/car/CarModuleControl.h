@@ -1,3 +1,5 @@
+#define VERBOSE 1
+
 #ifndef CarModuleControl_h
 #define CarModuleControl_h
 
@@ -28,13 +30,13 @@ void CarModuleControl::receiveEvent(EventBase *event){
   CarEvent *carEvent = (CarEvent *) event;
   this->currentState = this->currentState->transition(event);
   if (oldState != this->currentState){
-    #ifdef VERBOSE
-    Serial.print("State changed: ");
-    Serial.print(oldState->stateName());
-    Serial.print(" -> ");
-    Serial.println(this->currentState->stateName());
+    #if VERBOSE > 0
+      Serial.print("State changed: ");
+      Serial.print(oldState->stateName());
+      Serial.print(" -> ");
+      Serial.println(this->currentState->stateName());
     #endif
-    delete oldState;
+    delete(oldState);
   }
 };
 

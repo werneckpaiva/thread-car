@@ -13,8 +13,11 @@ class CarEvent : public EventBase {
       SPIN_LEFT_OVER,
       TURN_RIGHT_OVER,
       TURN_LEFT_OVER,
-      DISTANCE_DETECTED,
-      SPEED_CHANGED
+      SPEED_CHANGED,
+      MOVEMENT_STOPPED,
+      DETECT_DISTANCE_SCAN,
+      DETECT_DISTANCE_FIXED,
+      DISTANCE_DETECTED
     };
     CarEvent(EventType event);
     int CarEvent::eventType();
@@ -59,4 +62,16 @@ class SpeedChangedEvent : public CarEvent{
     byte getSpeed(){ return this->newSpeed; };
 
 };
+
+class DetectDistanceFixedEvent : public CarEvent {
+  private:
+    byte angle;
+
+  public:
+    DetectDistanceFixedEvent(byte angle) : CarEvent(CarEvent::DETECT_DISTANCE_FIXED){
+      this->angle = angle;
+    }
+    byte getAngle(){ return this->angle; };
+};
+
 #endif

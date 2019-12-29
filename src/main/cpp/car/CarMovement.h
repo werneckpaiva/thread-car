@@ -3,19 +3,19 @@
 
 class CarMovement {
   private:
-    static const int MIN_MOTOR_SPEED = 90;
-    static const int MAX_MOTOR_SPEED = 250;
+    static const byte MIN_MOTOR_SPEED = 90;
+    static const byte MAX_MOTOR_SPEED = 250;
   
-    int dir1LeftPin;
-    int dir2LeftPin;
-    int speedLeftPin;
-    int dir1RightPin;
-    int dir2RightPin;
-    int speedRightPin;
+    byte dir1LeftPin;
+    byte dir2LeftPin;
+    byte speedLeftPin;
+    byte dir1RightPin;
+    byte dir2RightPin;
+    byte speedRightPin;
 
-    int currentSpeed = 0;
+    byte currentSpeed = 0;
 
-    void setMotorSpeed(int speedL,int speedR) {
+    void setMotorSpeed(byte speedL, byte speedR) {
         analogWrite(this->speedLeftPin, abs(speedL)); 
         analogWrite(this->speedRightPin, abs(speedR));
     }
@@ -24,8 +24,8 @@ class CarMovement {
 
     static const int MAX_SPEED = (MAX_MOTOR_SPEED - MIN_MOTOR_SPEED);
 
-    CarMovement(int dir1LeftPin, int dir2LeftPin, int speedLeftPin,
-                int dir1RightPin, int dir2RightPin, int speedRightPin){
+    CarMovement(byte dir1LeftPin, byte dir2LeftPin, byte speedLeftPin,
+                byte dir1RightPin, byte dir2RightPin, byte speedRightPin){
       this->dir1LeftPin = dir1LeftPin;
       this->dir2LeftPin = dir2LeftPin;
       this->speedLeftPin = speedLeftPin;
@@ -89,7 +89,7 @@ class CarMovement {
       digitalWrite(this->dir2RightPin, LOW);
     }
 
-    void spinLeft(int movingSpeed){
+    byte spinLeft(int movingSpeed){
       setMovingSpeed(movingSpeed);
       digitalWrite(this->dir1LeftPin,  HIGH);
       digitalWrite(this->dir2LeftPin,  LOW);
