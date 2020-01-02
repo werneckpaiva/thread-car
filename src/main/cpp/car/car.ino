@@ -1,3 +1,4 @@
+//#include <ESP8266WiFi.h>
 #include "EventBus.h"
 #include "CarEvents.h"
 #include "CarStates.h"
@@ -39,10 +40,15 @@ CarModuleControl distanceDetectionControl(new StoppedDistanceDetectionState(
 IRCarControl irCarControl(IR_PIN);
 //SerialCarControl serialCarControl;
 
-CarModuleControl autoPilot(new MonitoringAutoPilotState());
+CarModuleControl autoPilot(new DrivingAutoPilotState());
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(74880);
+  #if VERBOSE > 0
+    Serial.println(">>>>>>>>> FROM THE BEGINNING");
+  #endif
+  EventBus::setup();
+
 //  serialCarControl.setup();
   irCarControl.setup();
 

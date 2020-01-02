@@ -11,14 +11,14 @@ class DistanceDetector{
 
     Servo head;
     byte headAngle = 90;
-    static const double SOUND_SPEED = 0.01715;
+    static constexpr double SOUND_SPEED = 0.01715;
 
   public:
     static const byte MAX_DISTANCE = 100;
     static const byte MIN_DISTANCE = 4;
     static const byte MIN_HEAD_ANGLE = 0;
     static const byte MAX_HEAD_ANGLE = 180;
-    static const byte MID_HEAD_ANGLE = (MIN_HEAD_ANGLE + MAX_HEAD_ANGLE) / 2;
+    static constexpr byte MID_HEAD_ANGLE = (MIN_HEAD_ANGLE + MAX_HEAD_ANGLE) / 2;
     
     DistanceDetector(byte servoPin, byte echoPin, byte triggerPin){
       this->servoPin = servoPin;

@@ -32,6 +32,14 @@ class HitAutoPilotState : public CarState{
     char* stateName(){return "HitAutoPilotState"; };
 };
 
+class DrivingAutoPilotState : public CarState {
+  public:
+    DrivingAutoPilotState();
+    CarState* transition(CarEvent *event);
+    void processDistance(FullDistanceDetectedEvent *event);
+    char* stateName(){return "DrivingAutoPilotState"; };
+};
+
 // State machine ------------------------------
 
 CarState* MonitoringAutoPilotState::transition(CarEvent *event) {
@@ -52,10 +60,18 @@ CarState* HitAutoPilotState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::DISTANCE_DETECTED:
       return this->processDistance(event);
+  }
+  return this;
+};
+
+CarState* DrivingAutoPilotState::transition(CarEvent *event) {
+  switch(event->eventType()){
+    case CarEvent::FULL_DISTANCE_DETECTED:
+      this->processDistance(event);
       break;
   }
   return this;
-}
+};
 
 // MonitoringAutoPilotState --------------------------
 
@@ -103,8 +119,7 @@ CarState* HitAutoPilotState :: processDistance(DistanceDetectedEvent *event){
       Serial.print(event->getDistance());
       Serial.println(" cm");
     #endif
-    EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
-    return new MonitoringAutoPilotState();
+    return new DrivingAutoPilotState();
   }
   if (counter > 2){
     EventBus::dispatchEvent(new CarEvent(CarEvent::DETECT_DISTANCE_SCAN));
@@ -113,5 +128,25 @@ CarState* HitAutoPilotState :: processDistance(DistanceDetectedEvent *event){
   return this;
 };
 
+// DrivingAutoPilotState --------------------------
+
+DrivingAutoPilotState :: DrivingAutoPilotState(){
+//  EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
+//  EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_BACKWARD), 5);
+//  EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_STOP), 300);
+  EventBus::dispatchTimedEvent(new CarEvent(CarEvent::DETECT_FULL_SCAN), 350);
+};
+
+void DrivingAutoPilotState :: processDistance(FullDistanceDetectedEvent *event){
+  for (byte i=0; i<event->numPoints; i++){
+    #if VERBOSE > 0
+//      Serial.println("Angle full scan");
+      Serial.print("Angle: ");
+      Serial.print(event->distances[i].angle);
+      Serial.print(" Distance: ");
+      Serial.println(event->distances[i].distance);
+    #endif
+  }
+}
 
 #endif

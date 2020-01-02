@@ -28,7 +28,7 @@ CarModuleControl::CarModuleControl(CarState *initialState){
 void CarModuleControl::receiveEvent(EventBase *event){
   CarState *oldState = this->currentState;
   CarEvent *carEvent = (CarEvent *) event;
-  this->currentState = this->currentState->transition(event);
+  this->currentState = this->currentState->transition(carEvent);
   if (oldState != this->currentState){
     #if VERBOSE > 0
       Serial.print("State changed: ");
@@ -36,7 +36,7 @@ void CarModuleControl::receiveEvent(EventBase *event){
       Serial.print(" -> ");
       Serial.println(this->currentState->stateName());
     #endif
-    delete(oldState);
+//    delete(oldState);
   }
 };
 

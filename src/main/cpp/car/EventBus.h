@@ -1,6 +1,6 @@
 #include "TaskScheduler.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #ifndef EventBus_h
 #define EventBus_h
@@ -26,9 +26,22 @@ class ListenerNode{
       this->listener = listener;
     }
 
-    EventListener* ListenerNode::getListener(){
+    EventListener* getListener(){
       return this->listener;
     }
+};
+
+class EventNode{
+  public:
+    EventBase *event;
+    EventNode *next = NULL;
+
+    EventNode(EventBase *event, EventNode *next=NULL){
+      this->event = event;
+      this->next = next;
+    }
+
+    EventBase *getEvent(){ return this->event; }
 };
 
 class EventBusTimedEventRunner;
@@ -44,19 +57,30 @@ class EventBusTimedEventRunner : public RunnableTask {
     void execute();
 };
 
+class EventBusRunner : public RunnableTask {
+  public:
+    void execute();
+};
+
 class EventBus{
   private:
     // Keep tracking of listeners
     static ListenerNode *rootListenerList;
+    static EventNode *rootEventList;
+    static EventBusRunner *eventBusRunner;
 
   public:
     static void addEventListener(EventListener *listener);
     static void dispatchEvent(EventBase *event);
     static EventBusTimedEventRunner* dispatchTimedEvent(EventBase *event, int interval);
     static void cancelTimedEvent(EventBusTimedEventRunner *task);
+    static void processAllEvents();
+    static void setup();
 };
 
 ListenerNode * EventBus :: rootListenerList = NULL;
+EventNode * EventBus :: rootEventList = NULL;
+EventBusRunner * EventBus :: eventBusRunner = NULL;
 
 
 void EventBus :: addEventListener(EventListener *listener){
@@ -70,20 +94,50 @@ void EventBus :: dispatchEvent(EventBase *event){
     Serial.print("Dispatch EVENT: ");
     Serial.println(event->eventType());
   #endif
-  if (event == NULL) return;
-  ListenerNode *currentListenerNode = EventBus::rootListenerList;
-  while (currentListenerNode != NULL){
-    currentListenerNode->getListener()->receiveEvent(event);
-    currentListenerNode = currentListenerNode->next;
+  EventNode *eventNode = new EventNode(event);
+  if (EventBus::rootEventList == NULL){
+    EventBus::rootEventList = eventNode;
+    return;
   }
-  #if VERBOSE > 1
-    Serial.println("Deleting event");
-  #endif;
-  delete(event);
+  EventNode *currentNode = EventBus::rootEventList;
+  while(currentNode->next != NULL){
+    currentNode = currentNode->next;
+  }
+  currentNode->next = eventNode;
+};
+
+void EventBus :: processAllEvents(){
+  if (EventBus::rootEventList == NULL) return;
+  ListenerNode *currentListenerNode;
+  EventNode *currentEventNode = EventBus::rootEventList;
+  EventNode *eventNodeToDelete = NULL;
+  while(currentEventNode != NULL){
+    EventBase *event = currentEventNode->event;
+    #if VERBOSE > 0
+      Serial.print("Processing EVENT: ");
+      Serial.println(event->eventType());
+    #endif
+    currentListenerNode = EventBus::rootListenerList;
+    while (currentListenerNode != NULL){
+      currentListenerNode->getListener()->receiveEvent(event);
+      currentListenerNode = currentListenerNode->next;
+    }
+    #if VERBOSE > 0
+//      Serial.print("Deleting event");
+//      Serial.println(event->eventType());
+    #endif;
+    eventNodeToDelete = currentEventNode;
+    currentEventNode = currentEventNode->next;
+    delete(eventNodeToDelete->event);
+    delete(eventNodeToDelete);
+  }
+  EventBus::rootEventList = NULL;
 };
 
 void EventBus :: cancelTimedEvent(EventBusTimedEventRunner *task){
-  Serial.println("Cancel timed event");
+  #if VERBOSE > 0
+    Serial.println("Cancel timed event");
+  #endif
   delete(task->event);
   TaskScheduler::removeTask(task);
   delete(task);
@@ -95,6 +149,10 @@ EventBusTimedEventRunner* EventBus :: dispatchTimedEvent(EventBase *event, int i
   return task;
 };
 
+void EventBus :: setup(){
+  EventBus::eventBusRunner = new EventBusRunner();
+  TaskScheduler::scheduleRecurrentTask(EventBus::eventBusRunner, 0);
+}
 
 EventBusTimedEventRunner :: EventBusTimedEventRunner(EventBase *event){
   this->event = event;
@@ -108,5 +166,8 @@ void EventBusTimedEventRunner :: execute(){
   this->event = NULL;
 };
 
+void EventBusRunner :: execute(){
+  EventBus::processAllEvents();
+}
 
 #endif

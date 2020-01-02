@@ -1,7 +1,7 @@
-#define VERBOSE 0
-
 #include "CarMovement.h"
 #include "CarModuleControl.h"
+
+#define VERBOSE 0
 
 #ifndef CarMovementStates_h
 #define CarMovementStates_h

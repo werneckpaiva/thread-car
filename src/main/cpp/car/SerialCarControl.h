@@ -19,7 +19,6 @@ class SerialCarControl : public RunnableTask {
 };
 
 void SerialCarControl :: setup(){
-  Serial.begin(9600);
   TaskScheduler::scheduleRecurrentTask(this, 30);
 };
 
@@ -46,7 +45,6 @@ void SerialCarControl :: processCommand(char cmd) {
     EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_FORWARD));
   } else if (cmd=='D') {
     EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_BACKWARD));
-//    EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_STOP), 2000);
   } else if (cmd=='L') {
     EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_LEFT));
   } else if (cmd=='R') {

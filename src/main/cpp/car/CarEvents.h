@@ -17,10 +17,12 @@ class CarEvent : public EventBase {
       MOVEMENT_STOPPED,
       DETECT_DISTANCE_SCAN,
       DETECT_DISTANCE_FIXED,
-      DISTANCE_DETECTED
+      DETECT_FULL_SCAN,
+      DISTANCE_DETECTED,
+      FULL_DISTANCE_DETECTED
     };
     CarEvent(EventType event);
-    int CarEvent::eventType();
+    int eventType();
 
   private:
     EventType event;
@@ -72,6 +74,27 @@ class DetectDistanceFixedEvent : public CarEvent {
       this->angle = angle;
     }
     byte getAngle(){ return this->angle; };
+};
+
+struct DistanceAndAngle {
+  byte distance;
+  byte angle;
+};
+
+class FullDistanceDetectedEvent : public CarEvent {
+  public:
+    byte numPoints;
+    DistanceAndAngle* distances;
+
+    FullDistanceDetectedEvent(DistanceAndAngle* distances, byte numPoints) : CarEvent(CarEvent::FULL_DISTANCE_DETECTED){
+      this->numPoints = numPoints;
+      this->distances = distances;
+    }
+
+    ~FullDistanceDetectedEvent(){
+      delete[] this->distances;
+    }
+    
 };
 
 #endif
