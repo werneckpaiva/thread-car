@@ -10,7 +10,7 @@ class MonitoringAutoPilotState : public CarState{
   private:
     static const byte MIN_MOVING_DISTANCE = 10;
     static const byte MAX_MOVING_DISTANCE = 30;
-    static const float MOVING_DISTANCE_DIFF = (MAX_MOVING_DISTANCE - MIN_MOVING_DISTANCE);
+    static constexpr float MOVING_DISTANCE_DIFF = (MAX_MOVING_DISTANCE - MIN_MOVING_DISTANCE);
     byte currentSpeed = 0;
   
   public: 
@@ -45,9 +45,9 @@ class DrivingAutoPilotState : public CarState {
 CarState* MonitoringAutoPilotState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::DISTANCE_DETECTED:
-      return this->processDistance(event);
+      return this->processDistance((DistanceDetectedEvent *) event);
     case CarEvent::SPEED_CHANGED:
-      this->speedChanged(event);
+      this->speedChanged((SpeedChangedEvent *) event);
       break;
     case CarEvent::MOVEMENT_STOPPED:
       this->currentSpeed = 0;
@@ -59,7 +59,7 @@ CarState* MonitoringAutoPilotState::transition(CarEvent *event) {
 CarState* HitAutoPilotState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::DISTANCE_DETECTED:
-      return this->processDistance(event);
+      return this->processDistance((DistanceDetectedEvent *) event);
   }
   return this;
 };
@@ -67,7 +67,7 @@ CarState* HitAutoPilotState::transition(CarEvent *event) {
 CarState* DrivingAutoPilotState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::FULL_DISTANCE_DETECTED:
-      this->processDistance(event);
+      this->processDistance((FullDistanceDetectedEvent *) event);
       break;
   }
   return this;
@@ -138,7 +138,8 @@ DrivingAutoPilotState :: DrivingAutoPilotState(){
 };
 
 void DrivingAutoPilotState :: processDistance(FullDistanceDetectedEvent *event){
-  for (byte i=0; i<event->numPoints; i++){
+
+  for (byte i=0; i<FullDistanceDetectedEvent::NUM_POINTS; i++){
     #if VERBOSE > 0
 //      Serial.println("Angle full scan");
       Serial.print("Angle: ");
@@ -147,6 +148,7 @@ void DrivingAutoPilotState :: processDistance(FullDistanceDetectedEvent *event){
       Serial.println(event->distances[i].distance);
     #endif
   }
+//  delete[] event->distances;
 }
 
 #endif

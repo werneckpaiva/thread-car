@@ -1,4 +1,5 @@
-#include <IRremote.h>
+#include <IRremoteESP8266.h>
+#include <IRrecv.h>
 
 #define IR_KEY_UP_1          0x00FF18E7
 #define IR_KEY_UP_2          0x3D9AE3F7
@@ -31,7 +32,6 @@ class IRCarControl : public RunnableTask {
     void setup(){
       TaskScheduler::scheduleRecurrentTask(this, 10);
       irrecv->enableIRIn();
-      irrecv->blink13(true);
     }
 };
 

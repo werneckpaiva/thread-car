@@ -41,6 +41,10 @@ class EventNode{
       this->next = next;
     }
 
+    ~EventNode() {
+      delete(this->event);
+    }
+
     EventBase *getEvent(){ return this->event; }
 };
 
@@ -122,13 +126,12 @@ void EventBus :: processAllEvents(){
       currentListenerNode->getListener()->receiveEvent(event);
       currentListenerNode = currentListenerNode->next;
     }
-    #if VERBOSE > 0
-//      Serial.print("Deleting event");
-//      Serial.println(event->eventType());
+    #if VERBOSE > 1
+      Serial.print("Deleting event");
+      Serial.println(event->eventType());
     #endif;
     eventNodeToDelete = currentEventNode;
     currentEventNode = currentEventNode->next;
-    delete(eventNodeToDelete->event);
     delete(eventNodeToDelete);
   }
   EventBus::rootEventList = NULL;

@@ -65,12 +65,11 @@ class ScanningSpecificPointState : public DistanceDetectionState, public Runnabl
 class FullScanDistanceDetectionState : public DistanceDetectionState, public RunnableTask {
   protected:
     static const int HEAD_TIMER = 50;
-    static const byte ANGLE_INCREMENT = 10;
-    static const byte NUM_POINTS = ((DistanceDetector::MAX_HEAD_ANGLE - DistanceDetector::MIN_HEAD_ANGLE) / ANGLE_INCREMENT) + 1;
+    static constexpr byte ANGLE_INCREMENT = ((DistanceDetector::MAX_HEAD_ANGLE - DistanceDetector::MIN_HEAD_ANGLE) / (FullDistanceDetectedEvent::NUM_POINTS - 1));
     byte currentPoint = 0;
     byte angle = 0;
     bool movesClockwise = true;
-    DistanceAndAngle *distances = NULL;
+    FullDistanceDetectedEvent *currentEvent = NULL;
 
   public:
     FullScanDistanceDetectionState(DistanceDetectionStateControl *control);
@@ -96,7 +95,7 @@ ScanningSpecificPointState :: ScanningSpecificPointState(DistanceDetectionStateC
 
 FullScanDistanceDetectionState :: FullScanDistanceDetectionState(DistanceDetectionStateControl *control) : DistanceDetectionState(control) {
   this->angle = 0;
-  this->distances = NULL;
+  this->currentEvent = NULL;
   TaskScheduler::scheduleRecurrentTask(this, FullScanDistanceDetectionState::HEAD_TIMER);
 };
 
@@ -118,7 +117,8 @@ DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *eve
       return new StoppedDistanceDetectionState(this->control);
     case CarEvent::DETECT_DISTANCE_FIXED:
       TaskScheduler::removeTask(this);
-      return new ScanningSpecificPointState(this->control, event);
+      DetectDistanceFixedEvent * fixedEvent = (DetectDistanceFixedEvent *) event;
+      return new ScanningSpecificPointState(this->control, fixedEvent);
   }
   return this;
 };
@@ -186,13 +186,13 @@ void ScanningSpecificPointState::execute() {
 };
 
 void FullScanDistanceDetectionState::execute() {
-  if (this->distances == NULL){
-      this->distances = new DistanceAndAngle[FullScanDistanceDetectionState::NUM_POINTS];
+  if (this->currentEvent == NULL){
+      this->currentEvent = new FullDistanceDetectedEvent;
   }
   this->control->getDistanceDetector()->moveHead(this->angle);
   byte distance =  this->control->getDistanceDetector()->detectDistance();
-  this->distances[this->currentPoint].distance = distance;
-  this->distances[this->currentPoint].angle = this->angle;
+  this->currentEvent->distances[this->currentPoint].distance = distance;
+  this->currentEvent->distances[this->currentPoint].angle = this->angle;
   #if VERBOSE > 1
     Serial.print("Scanning currentPoint: ");
     Serial.print(this->currentPoint);
@@ -209,18 +209,18 @@ void FullScanDistanceDetectionState::execute() {
       this->currentPoint -= 1;
     }
   
-  if (this->currentPoint == 255 || this->currentPoint == FullScanDistanceDetectionState::NUM_POINTS){
+  if (this->currentPoint == 255 || this->currentPoint == FullDistanceDetectedEvent::NUM_POINTS){
     if (this->currentPoint == 255) {
       this->currentPoint = 0;
       this->angle = DistanceDetector::MIN_HEAD_ANGLE;
     }
-    if (this->currentPoint == FullScanDistanceDetectionState::NUM_POINTS) {
-      this->currentPoint = FullScanDistanceDetectionState::NUM_POINTS - 1;
+    if (this->currentPoint == FullDistanceDetectedEvent::NUM_POINTS) {
+      this->currentPoint = FullDistanceDetectedEvent::NUM_POINTS - 1;
       this->angle = DistanceDetector::MAX_HEAD_ANGLE;
     }
     this->movesClockwise = !this->movesClockwise;
-    EventBus::dispatchEvent(new FullDistanceDetectedEvent(this->distances, FullScanDistanceDetectionState::NUM_POINTS));
-    this->distances = NULL;
+    EventBus::dispatchEvent(this->currentEvent);
+    this->currentEvent = NULL;
   }
 };
 

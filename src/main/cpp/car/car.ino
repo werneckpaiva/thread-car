@@ -1,4 +1,4 @@
-//#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 #include "EventBus.h"
 #include "CarEvents.h"
 #include "CarStates.h"

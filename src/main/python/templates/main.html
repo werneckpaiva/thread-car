@@ -23,11 +23,18 @@
       }
       #directionPanel{
         background: #ccc;
+        width: 90%;
+        height: 90%;
+      }
+
+      #directionPanel table{
+        width: 100%;
+        height: 100%;
       }
 
       #directionPanel td{
-        width: 100px;
-        height: 100px;
+        width: 33%;
+        height: 33%;
       }
 
       button {
@@ -41,36 +48,59 @@
         $(function(){
           socket = io.connect(document.domain + ':' + location.port);
 
-          $(".ctrlButton").click(function(){
-            var btnValue = $(this).val();
-            socket.emit('car_action', {action: btnValue});
-          });
+          var continuousEmitting = {
+            timerId: null,
+            REPEAT_RATE: 100,
+            startEmitting: function(value){
+              if (this.timerId != null) return;
+              this.timerId = setInterval(function(){
+                socket.emit('car_action', {action: value});
+                console.log("Emitting value: ", value);
+              }, this.REPEAT_RATE);
+            },
+            stopEmitting: function(){
+              if (this.timerId == null) return;
+              clearTimeout(this.timerId);
+              this.timerId = null;
+            }
+          }
+
+          $(".ctrlButton")
+            .mousedown(function(){
+              var value = $(this).val();
+              continuousEmitting.startEmitting(value);
+            })
+            .mouseup(function(){
+            continuousEmitting.stopEmitting();
+            });
 
           $(document).keydown(function(e){
-            var keyPressed = e.which;
-            var value = null;
-            switch(keyPressed){
-              case 38:
-                value = $("#btnUp").val();
-                break;
-              case 40:
-                value = $("#btnDown").val();
-                break;
-              case 37:
-                value = $("#btnLeft").val();
-                break;
-              case 39:
-                value = $("#btnRight").val();
-                break;
-              case 32:
-                value = $("#btnStop").val();
-                break;
-            }
-            if (value != null){
-              socket.emit('car_action', {action: value});
-              console.log(value)
-            }
-          });
+              var keyPressed = e.which;
+              var value = null;
+              switch(keyPressed){
+                case 38:
+                  value = $("#btnUp").val();
+                  break;
+                case 40:
+                  value = $("#btnDown").val();
+                  break;
+                case 37:
+                  value = $("#btnLeft").val();
+                  break;
+                case 39:
+                  value = $("#btnRight").val();
+                  break;
+                case 32:
+                  value = $("#btnStop").val();
+                  break;
+              }
+              if (value != null){
+                continuousEmitting.startEmitting(value);
+              }
+            })
+            .keyup(function(e){
+              continuousEmitting.stopEmitting();
+            });
         });
     </script>
 

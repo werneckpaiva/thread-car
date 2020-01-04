@@ -24,6 +24,9 @@ class CarEvent : public EventBase {
     CarEvent(EventType event);
     int eventType();
 
+  protected:
+    virtual ~CarEvent() = default;
+
   private:
     EventType event;
 };
@@ -83,18 +86,10 @@ struct DistanceAndAngle {
 
 class FullDistanceDetectedEvent : public CarEvent {
   public:
-    byte numPoints;
-    DistanceAndAngle* distances;
+    static const byte NUM_POINTS = 19;
+    DistanceAndAngle distances[NUM_POINTS];
 
-    FullDistanceDetectedEvent(DistanceAndAngle* distances, byte numPoints) : CarEvent(CarEvent::FULL_DISTANCE_DETECTED){
-      this->numPoints = numPoints;
-      this->distances = distances;
-    }
-
-    ~FullDistanceDetectedEvent(){
-      delete[] this->distances;
-    }
-    
+    FullDistanceDetectedEvent() : CarEvent(CarEvent::FULL_DISTANCE_DETECTED){}
 };
 
 #endif
