@@ -1,7 +1,7 @@
 #include "EventBus.h"
 #include "CarEvents.h"
 
-#define VERBOSE 2
+#define VERBOSE 0
 
 #ifndef AutoPilot_h
 #define AutoPilot_h
@@ -24,17 +24,20 @@ class HitAutoPilotState : public CarState{
   private:
     byte counter = 0;
     byte initialDistance;
+    byte currentSpeed;
 
   public:
-    HitAutoPilotState(DistanceDetectedEvent *event);
+    HitAutoPilotState(DistanceDetectedEvent *event, byte currentSpeed);
     CarState* transition(CarEvent *event);
     CarState* processDistance(DistanceDetectedEvent *event);
     char* stateName(){return "HitAutoPilotState"; };
 };
 
 class DrivingAutoPilotState : public CarState {
+  private:
+    byte currentSpeed;
   public:
-    DrivingAutoPilotState();
+    DrivingAutoPilotState(byte currentSpeed);
     CarState* transition(CarEvent *event);
     CarState* processDistance(FullDistanceDetectedEvent *event);
     char* stateName(){return "DrivingAutoPilotState"; };
@@ -84,7 +87,7 @@ CarState* MonitoringAutoPilotState :: processDistance(DistanceDetectedEvent *eve
     hitDistance = MIN_MOVING_DISTANCE;
   }
   if (event->getDistance() < hitDistance){
-    return new HitAutoPilotState(event);
+    return new HitAutoPilotState(event, this->currentSpeed);
   }
   return this;
 };
@@ -95,12 +98,13 @@ void MonitoringAutoPilotState :: speedChanged(SpeedChangedEvent *event){
 
 // HitAutoPilotState --------------------------------
 
-HitAutoPilotState :: HitAutoPilotState(DistanceDetectedEvent *event){
+HitAutoPilotState :: HitAutoPilotState(DistanceDetectedEvent *event, byte currentSpeed){
   #if VERBOSE > 1
     Serial.print("Distance hit: ");
     Serial.print(event->getDistance());
     Serial.println(" cm");
   #endif
+  this->currentSpeed = currentSpeed;
   this->initialDistance = event->getDistance();
   EventBus::dispatchEvent(new DetectDistanceFixedEvent(event->getAngle()));
 };
@@ -118,20 +122,22 @@ CarState* HitAutoPilotState :: processDistance(DistanceDetectedEvent *event){
       Serial.print(event->getDistance());
       Serial.println(" cm");
     #endif
-    return new DrivingAutoPilotState();
+    // TODO: Carry currentSpeed
+    return new MonitoringAutoPilotState();
   }
   if (counter > 2){
     #if VERBOSE > 0
       Serial.println("Hit twice");
     #endif
-    return new DrivingAutoPilotState();
+    return new DrivingAutoPilotState(currentSpeed);
   }
   return this;
 };
 
 // DrivingAutoPilotState --------------------------
 
-DrivingAutoPilotState :: DrivingAutoPilotState(){
+DrivingAutoPilotState :: DrivingAutoPilotState(byte currentSpeed){
+  this->currentSpeed = currentSpeed;
   EventBus::dispatchEvent(new CarEvent(CarEvent::MOVE_STOP));
   EventBus::dispatchEvent(new CarEvent(CarEvent::DETECT_FULL_SCAN));
 };
@@ -141,27 +147,11 @@ CarState* DrivingAutoPilotState :: processDistance(FullDistanceDetectedEvent *ev
   unsigned int leftDistance = 0;
   unsigned int rightDistance = 0;
   for (byte i=0; i< middle; i++){
-    leftDistance += event->distances[i].distance;
-//    #if VERBOSE > 0
-//      Serial.print("Angle: ");
-//      Serial.print(event->distances[i].angle);
-//      Serial.print(" Distance: ");
-//      Serial.println(event->distances[i].distance);
-//    #endif    
+    leftDistance += event->distances[i].distance;  
   }
   for (byte i=middle + 1; i< FullDistanceDetectedEvent::NUM_POINTS; i++){
     rightDistance += event->distances[i].distance;
-//    #if VERBOSE > 0
-//      Serial.print("Angle: ");
-//      Serial.print(event->distances[i].angle);
-//      Serial.print(" Distance: ");
-//      Serial.println(event->distances[i].distance);
-//    #endif    
   }
-//  Serial.print("Distance left: ");
-//  Serial.println(leftDistance);
-//  Serial.print("Distance right: ");
-//  Serial.print(rightDistance);
 
   EventBus::dispatchEvent(new CarEvent(CarEvent::STOP_DISTANCE_DETECTION));
   EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_BACKWARD), 50);
@@ -173,6 +163,7 @@ CarState* DrivingAutoPilotState :: processDistance(FullDistanceDetectedEvent *ev
      EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_LEFT), 800); 
   }
   EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_STOP), 1250);
+  // TODO: MoveForward with currentSpeed
   EventBus::dispatchTimedEvent(new CarEvent(CarEvent::MOVE_FORWARD), 1300);
   return new MonitoringAutoPilotState();
 }

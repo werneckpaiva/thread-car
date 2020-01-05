@@ -1,4 +1,4 @@
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifndef TaskScheduler_h
 #define TaskScheduler_h
