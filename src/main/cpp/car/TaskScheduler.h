@@ -65,16 +65,22 @@ class TaskScheduler{
     static byte countQueue(){
       byte counter = 0;
       TaskQueueElement *current = TaskScheduler::rootTaskQueueElement;
-      Serial.print("Tasks: ");
+      #if VERBOSE > 1
+        Serial.print("Tasks: ");
+      #endif
       while(current != NULL){
         counter++;
-        Serial.print(current->task->taskName());
-        Serial.print("(running: ");
-        Serial.print(current->task->isTaskRunning());
-        Serial.print(") ");
-        current = current->nextTaskQueueElement;
+        #if VERBOSE > 1
+          Serial.print(current->task->taskName());
+          Serial.print("(running: ");
+          Serial.print(current->task->isTaskRunning());
+          Serial.print(") ");
+          current = current->nextTaskQueueElement;
+        #endif
       }
-      Serial.println();
+      #if VERBOSE > 1
+        Serial.println();
+      #endif
       return counter;
     }
 };
@@ -97,8 +103,10 @@ void TaskScheduler :: process(){
       if (currentTaskQueueElement->task->isTaskRunning()){
         char * taskName = currentTaskQueueElement->task->taskName();
         if (! (strcmp(taskName, "IRCarControl")==0 || strcmp(taskName, "EventBus")==0) ){
-          Serial.print("Executing ");
-          Serial.println(taskName);
+          #if VERBOSE > 1
+            Serial.print("Executing ");
+            Serial.println(taskName);
+          # endif
         }
         currentTaskQueueElement->task->execute();
       }

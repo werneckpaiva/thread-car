@@ -115,21 +115,20 @@ CarState* HitAutoPilotState :: processDistance(DistanceDetectedEvent *event){
     Serial.print(event->getDistance());
     Serial.println(" cm");
   #endif
-  counter++;
+  this->counter++;
   if (event->getDistance() <= this->initialDistance){
      #if VERBOSE > 0
       Serial.print("Hit at ");
       Serial.print(event->getDistance());
       Serial.println(" cm");
     #endif
-    // TODO: Carry currentSpeed
-    return new MonitoringAutoPilotState();
-  }
-  if (counter > 2){
-    #if VERBOSE > 0
-      Serial.println("Hit twice");
-    #endif
     return new DrivingAutoPilotState(currentSpeed);
+  }
+  if (this->counter > 2){
+    #if VERBOSE > 0
+      Serial.println("After checking twice, didn't hit");
+    #endif
+    return new MonitoringAutoPilotState();
   }
   return this;
 };

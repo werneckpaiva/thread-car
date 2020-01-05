@@ -10,7 +10,7 @@
 #include "AutoPilot.h"
 #include "TaskScheduler.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 
 #define SPEED_L_PIN      6   // Needs to be a PWM pin to be able to control motor speed

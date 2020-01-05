@@ -1,6 +1,6 @@
 #include "CarEvents.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #ifndef CarModuleControl_h
 #define CarModuleControl_h
