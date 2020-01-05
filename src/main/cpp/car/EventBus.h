@@ -1,6 +1,6 @@
 #include "TaskScheduler.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifndef EventBus_h
 #define EventBus_h
@@ -59,11 +59,14 @@ class EventBusTimedEventRunner : public RunnableTask {
       return this->event->eventType();
     }
     void execute();
+
+    char* taskName(){ return "EventBusTimed"; };
 };
 
 class EventBusRunner : public RunnableTask {
   public:
     void execute();
+    char* taskName(){ return "EventBus"; };
 };
 
 class EventBus{
@@ -112,6 +115,7 @@ void EventBus :: dispatchEvent(EventBase *event){
 
 void EventBus :: processAllEvents(){
   if (EventBus::rootEventList == NULL) return;
+  
   ListenerNode *currentListenerNode;
   EventNode *currentEventNode = EventBus::rootEventList;
   EventNode *eventNodeToDelete = NULL;

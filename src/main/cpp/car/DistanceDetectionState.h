@@ -1,20 +1,36 @@
 #include "DistanceDetector.h"
 #include "CarEvents.h"
 
-#define VERBOSE 2
+#define VERBOSE 0
 
 #ifndef DistanceDetectionState_h
 #define DistanceDetectionState_h
 
-class DistanceDetectionStateControl {
+class DistanceDetectionStateControl : public RunnableTask{
   private:
     DistanceDetector *distanceDetector;
+    RunnableTask *currentTask = NULL;
 
   public:
     DistanceDetectionStateControl(DistanceDetector *distanceDetector){
       this->distanceDetector = distanceDetector;
+      TaskScheduler::scheduleRecurrentTask(this, 1000);
+      this->pauseTask();
     }
     DistanceDetector* getDistanceDetector(){ return this->distanceDetector; };
+
+    void execute(){
+      if (this->currentTask != NULL){
+        this->currentTask->execute();
+      }
+    }
+
+    void executeTask(RunnableTask *task, int period){
+      this->currentTask = task;
+      TaskScheduler::rescheduleTask(this, period);
+      this->startTask();
+    }
+    char* taskName(){ return "DistanceDetectionState"; };
 };
 
 class DistanceDetectionState : public CarState{
@@ -49,6 +65,8 @@ class ScanningDistanceDetectionState : public DistanceDetectionState, public Run
     DistanceDetectionState* transition(CarEvent *event);
     char * stateName(){return "ScanningDetectionState"; };
     void execute();
+
+    char* taskName(){ return "ScanningState"; };
 };
 
 class ScanningSpecificPointState : public DistanceDetectionState, public RunnableTask {
@@ -60,6 +78,7 @@ class ScanningSpecificPointState : public DistanceDetectionState, public Runnabl
     DistanceDetectionState* transition(CarEvent *event);
     char * stateName(){return "ScanningSpecificPointState"; };
     void execute();
+    char* taskName(){ return "ScanningPointState"; };
 };
 
 class FullScanDistanceDetectionState : public DistanceDetectionState, public RunnableTask {
@@ -76,27 +95,30 @@ class FullScanDistanceDetectionState : public DistanceDetectionState, public Run
     DistanceDetectionState* transition(CarEvent *event);
     char * stateName(){return "FullScanDistanceDetectionState"; };
     void execute();
+
+    char* taskName(){ return "FullScanState"; };
 };
 
 // Constructors -----------------------------------
 StoppedDistanceDetectionState :: StoppedDistanceDetectionState(DistanceDetectionStateControl *control) : DistanceDetectionState(control) {
   this->control->getDistanceDetector()->moveHead(90);
+  this->control->pauseTask();
 };
 
 ScanningDistanceDetectionState :: ScanningDistanceDetectionState(DistanceDetectionStateControl *control) : DistanceDetectionState(control) {
   this->angle = this->control->getDistanceDetector()->getHeadAngle();
-  TaskScheduler::scheduleRecurrentTask(this, ScanningDistanceDetectionState::HEAD_TIMER);
+  this->control->executeTask(this, ScanningDistanceDetectionState::HEAD_TIMER);
 };
 
 ScanningSpecificPointState :: ScanningSpecificPointState(DistanceDetectionStateControl *control, DetectDistanceFixedEvent *event) : DistanceDetectionState(control) {
-  TaskScheduler::scheduleRecurrentTask(this, ScanningSpecificPointState::HEAD_TIMER);
+  this->control->executeTask(this, ScanningSpecificPointState::HEAD_TIMER);
   this->angle = event->getAngle();
 };
 
 FullScanDistanceDetectionState :: FullScanDistanceDetectionState(DistanceDetectionStateControl *control) : DistanceDetectionState(control) {
   this->angle = 0;
   this->currentEvent = NULL;
-  TaskScheduler::scheduleRecurrentTask(this, FullScanDistanceDetectionState::HEAD_TIMER);
+  this->control->executeTask(this, FullScanDistanceDetectionState::HEAD_TIMER);
 };
 
 // State Machine -----------------------------------
@@ -113,10 +135,8 @@ DistanceDetectionState* StoppedDistanceDetectionState::transition(CarEvent *even
 DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVEMENT_STOPPED:
-      TaskScheduler::removeTask(this);
       return new StoppedDistanceDetectionState(this->control);
     case CarEvent::DETECT_DISTANCE_FIXED:
-      TaskScheduler::removeTask(this);
       DetectDistanceFixedEvent * fixedEvent = (DetectDistanceFixedEvent *) event;
       return new ScanningSpecificPointState(this->control, fixedEvent);
   }
@@ -126,19 +146,19 @@ DistanceDetectionState* ScanningDistanceDetectionState::transition(CarEvent *eve
 DistanceDetectionState* ScanningSpecificPointState::transition(CarEvent *event) {
   switch(event->eventType()){
     case CarEvent::MOVEMENT_STOPPED:
-      TaskScheduler::removeTask(this);
       return new StoppedDistanceDetectionState(this->control);
     case CarEvent::DETECT_DISTANCE_SCAN:
-      TaskScheduler::removeTask(this);
       return new ScanningDistanceDetectionState(this->control);
+    case CarEvent::DETECT_FULL_SCAN:
+      return new FullScanDistanceDetectionState(this->control);
   }
   return this;
 };
 
 DistanceDetectionState* FullScanDistanceDetectionState::transition(CarEvent *event) {
   switch(event->eventType()){
-    case CarEvent::FULL_DISTANCE_DETECTED:
-      break;
+    case CarEvent::STOP_DISTANCE_DETECTION:
+      return new StoppedDistanceDetectionState(this->control);
   }
   return this;
 };

@@ -1,4 +1,4 @@
-#define VERBOSE 0
+#define VERBOSE 1
 
 #ifndef TaskScheduler_h
 #define TaskScheduler_h
@@ -22,6 +22,8 @@ class RunnableTask {
     bool isTaskRunning(){
       return this->taskRunning;
     };
+
+    virtual char* taskName();
 };
 
 
@@ -52,52 +54,66 @@ class TaskScheduler{
   private:
     static void cleanupTaskQueueElements();
     static TaskQueueElement *rootTaskQueueElement;
+    static bool maybeDelete;
 
   public:
     static void scheduleRecurrentTask(RunnableTask *task, int period);
     static void scheduleRunOnceTask(RunnableTask *task, int period);
     static void removeTask(RunnableTask *task);
+    static void rescheduleTask(RunnableTask *task, int period);
     static void process();
     static byte countQueue(){
       byte counter = 0;
       TaskQueueElement *current = TaskScheduler::rootTaskQueueElement;
+      Serial.print("Tasks: ");
       while(current != NULL){
         counter++;
+        Serial.print(current->task->taskName());
+        Serial.print("(running: ");
+        Serial.print(current->task->isTaskRunning());
+        Serial.print(") ");
         current = current->nextTaskQueueElement;
       }
+      Serial.println();
       return counter;
     }
 };
 
 TaskQueueElement *TaskScheduler :: rootTaskQueueElement = NULL;
+bool TaskScheduler :: maybeDelete = false;
 
 void TaskScheduler :: process(){
   TaskQueueElement *currentTaskQueueElement = TaskScheduler::rootTaskQueueElement;
   TaskQueueElement *nextQueueTask;
   unsigned long currentTime;
-  bool maybeDelete = false;
+  TaskScheduler::maybeDelete = false;
   while(currentTaskQueueElement != NULL){
     currentTime = millis();
     nextQueueTask = currentTaskQueueElement->nextTaskQueueElement;
+
+    // Time to run
     if (currentTime >= currentTaskQueueElement->nextRun){
-//      Serial.print("CurrentTime: ");
-//      Serial.print(currentTime);
-//      Serial.print(" next run: ");
-//      Serial.println(currentTaskQueueElement->nextRun);
+
       if (currentTaskQueueElement->task->isTaskRunning()){
-        currentTaskQueueElement->task->execute(); 
+        char * taskName = currentTaskQueueElement->task->taskName();
+        if (! (strcmp(taskName, "IRCarControl")==0 || strcmp(taskName, "EventBus")==0) ){
+          Serial.print("Executing ");
+          Serial.println(taskName);
+        }
+        currentTaskQueueElement->task->execute();
       }
+
       if (currentTaskQueueElement->isRecurrent()){
         currentTaskQueueElement->nextRun = (currentTime + currentTaskQueueElement->recurrentPeriod);
       } else {
-//        delete(currentTaskQueueElement->task);
+        delete(currentTaskQueueElement->task);
         currentTaskQueueElement->markForDeletion = true;
+        TaskScheduler::maybeDelete = true;
       }
-      maybeDelete = true;
     }
     currentTaskQueueElement = nextQueueTask;
   }
-  if (maybeDelete){
+  if (TaskScheduler::maybeDelete){
     TaskScheduler::cleanupTaskQueueElements();
   }
 };
@@ -107,19 +123,18 @@ void TaskScheduler :: cleanupTaskQueueElements(){
   TaskQueueElement *currentTaskQueueElement = TaskScheduler::rootTaskQueueElement;
   if (currentTaskQueueElement->markForDeletion){
     TaskScheduler::rootTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
-//    delete(currentTaskQueueElement);
+    delete(currentTaskQueueElement);
   } 
   while(currentTaskQueueElement->nextTaskQueueElement != NULL){
     if (currentTaskQueueElement->nextTaskQueueElement->markForDeletion){
       TaskQueueElement *deleteTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
       currentTaskQueueElement->nextTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement->nextTaskQueueElement;
-//      delete(deleteTaskQueueElement);
+      delete(deleteTaskQueueElement);
     }
     currentTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
   }
-  #if VERBOSE > 2
-    Serial.print("Size of the execution queue: ");
-    Serial.println(TaskScheduler::countQueue());
+  #if VERBOSE > 0
+    TaskScheduler::countQueue();
   #endif
 };
 
@@ -132,6 +147,24 @@ void TaskScheduler :: removeTask(RunnableTask *task){
     if (currentTaskQueueElement->task == task){
       currentTaskQueueElement->task = NULL;
       currentTaskQueueElement->markForDeletion = true;
+      TaskScheduler::maybeDelete = true;
+      break;
+    }
+    currentTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;
+  }
+}
+
+void TaskScheduler :: rescheduleTask(RunnableTask *task, int period){
+   #if VERBOSE > 0
+    Serial.print("Rescheduling task to ");
+    Serial.print(period);
+    Serial.println("ms");
+  #endif
+  TaskQueueElement *currentTaskQueueElement = TaskScheduler::rootTaskQueueElement;
+  while(currentTaskQueueElement != NULL){
+    if (currentTaskQueueElement->task == task){
+      currentTaskQueueElement->recurrentPeriod = period;
+      currentTaskQueueElement->nextRun = 0;
       break;
     }
     currentTaskQueueElement = currentTaskQueueElement->nextTaskQueueElement;

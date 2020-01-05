@@ -1,3 +1,5 @@
+#include "CarEvents.h"
+
 #define VERBOSE 1
 
 #ifndef CarModuleControl_h
@@ -36,7 +38,7 @@ void CarModuleControl::receiveEvent(EventBase *event){
       Serial.print(" -> ");
       Serial.println(this->currentState->stateName());
     #endif
-//    delete(oldState);
+    delete(oldState);
   }
 };
 
