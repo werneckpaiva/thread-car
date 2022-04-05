@@ -15,7 +15,6 @@ class EventListener{
   public: virtual void receiveEvent(EventBase *event);
 };
 
-
 class ListenerNode{
   private:
     EventListener *listener;
@@ -73,7 +72,8 @@ class EventBus{
   private:
     // Keep tracking of listeners
     static ListenerNode *rootListenerList;
-    static EventNode *rootEventList;
+    static EventNode *frontEventList;
+    static EventNode *rearEventList;
     static EventBusRunner *eventBusRunner;
 
   public:
@@ -86,7 +86,8 @@ class EventBus{
 };
 
 ListenerNode * EventBus :: rootListenerList = NULL;
-EventNode * EventBus :: rootEventList = NULL;
+EventNode * EventBus :: frontEventList = NULL;
+EventNode * EventBus :: rearEventList = NULL;
 EventBusRunner * EventBus :: eventBusRunner = NULL;
 
 
@@ -102,22 +103,19 @@ void EventBus :: dispatchEvent(EventBase *event){
     Serial.println(event->eventType());
   #endif
   EventNode *eventNode = new EventNode(event);
-  if (EventBus::rootEventList == NULL){
-    EventBus::rootEventList = eventNode;
-    return;
+  if (EventBus::rearEventList == NULL){
+    EventBus::frontEventList = eventNode;
+  } else {
+    EventBus::rearEventList->next = eventNode;
   }
-  EventNode *currentNode = EventBus::rootEventList;
-  while(currentNode->next != NULL){
-    currentNode = currentNode->next;
-  }
-  currentNode->next = eventNode;
+  EventBus::rearEventList = eventNode;
 };
 
 void EventBus :: processAllEvents(){
-  if (EventBus::rootEventList == NULL) return;
-  
+  if (EventBus::frontEventList == NULL) return;
+
   ListenerNode *currentListenerNode;
-  EventNode *currentEventNode = EventBus::rootEventList;
+  EventNode *currentEventNode = EventBus::frontEventList;
   EventNode *eventNodeToDelete = NULL;
   while(currentEventNode != NULL){
     EventBase *event = currentEventNode->event;
@@ -138,7 +136,8 @@ void EventBus :: processAllEvents(){
     currentEventNode = currentEventNode->next;
     delete(eventNodeToDelete);
   }
-  EventBus::rootEventList = NULL;
+  EventBus::frontEventList = NULL;
+  EventBus::rearEventList = NULL;
 };
 
 void EventBus :: cancelTimedEvent(EventBusTimedEventRunner *task){
